@@ -6,7 +6,7 @@
 /* Layout: one narrow column, sticky date bar, today-picker first, muscle groups colour-coded like bumper plates, rest timer docked at the bottom */
 :root{
   --bg:#eef0ee; --surface:#ffffff; --fg:#15191a; --muted:#5f686a; --line:#d5dad7;
-  --accent:#1f5fd6; --done:#178a4a; --done-bg:#e3f4ea; --rust:#c4622d; --sweat:#3a9be0;
+  --accent:#1f5fd6; --done:#178a4a; --done-bg:#e3f4ea; --rust:#c4622d; --sweat:#3a9be0; --skin:#e9b98c; --skin-d:#c98e62; --hair:#4b2e1d; --eye:#5b3a21; --mouth:#5a1f1a;
   --p-legs:#d23a2f; --p-chest:#1f5fd6; --p-back:#e2a813; --p-arms:#2e9a4f; --p-shoulders:#8a9396; --p-core:#2a2f31;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -188,7 +188,7 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
       <button class="go" id="wsgo">Start set 1</button>
     </div>
     <div class="chips" id="ws"></div>
-    <button class="linkbtn" data-demo="wallsit">▶ Watch Rusty do it</button>
+    <button class="linkbtn" data-demo="wallsit">▶ Watch Xander do it</button>
   </div>
 
   <div class="card extra" id="warmcard">
@@ -213,7 +213,7 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
       <label for="z2min">Minutes <input id="z2min" inputmode="numeric" placeholder="30"></label>
       <label for="z2inc">Incline % <input id="z2inc" inputmode="decimal" placeholder="10"></label>
     </div>
-    <button class="linkbtn" data-demo="zone2">▶ Watch Rusty do it</button>
+    <button class="linkbtn" data-demo="zone2">▶ Watch Xander do it</button>
     <div class="or">
       <h4>Or swap in: the stairs</h4>
       <p>Walk the stairs, 10 reps of a different move at each level.</p>
@@ -467,7 +467,7 @@ function exHtml(e,d){
       <div class="sets">${[0,1,2].map(i=>`<label for="kg-${e.id}-${i}">Set ${i+1} kg<input id="kg-${e.id}-${i}" inputmode="decimal" data-kg="${e.id}" data-i="${i}" value="${esc(vals[i]??"")}" placeholder="${esc(ph[i]??"")}"></label>`).join("")}</div>
       ${e.alt?`<div class="chips"><button class="chip ${usedAlt?"":"on"}" data-use="${e.id}" data-v="main">${esc(e.name)}</button><button class="chip ${usedAlt?"on":""}" data-use="${e.id}" data-v="alt">${esc(e.alt)}</button></div>`:""}
       <div><h4 style="margin-bottom:6px">4th set</h4><div class="chips">${TECH.map(t=>`<button class="chip ${d.tech[e.id]===t?"on":""}" data-tech="${e.id}" data-v="${t}">${t}</button>`).join("")}</div></div>
-      ${e.demo?`<button class="linkbtn" data-demo="${e.demo}">▶ Watch Rusty do it</button>`:""}
+      ${e.demo?`<button class="linkbtn" data-demo="${e.demo}">▶ Watch Xander do it</button>`:""}
       <div class="hint">Type today's weights. Grey numbers are your last lift.</div>
     </div></li>`;
 }
@@ -587,7 +587,7 @@ document.addEventListener("input",ev=>{
 document.addEventListener("focusout",ev=>{const id=ev.target.dataset&&ev.target.dataset.kg;if(id)setTimeout(()=>{const a=document.activeElement;if(!a||!a.dataset||a.dataset.kg!==id)rerenderEx(id)},50)});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){if(restT)restTick();if(wsT)wsTick()}});
 
-// ===================== Rusty demos =====================
+// ===================== Xander demos =====================
 const DW=220,DH=170,G=150;
 const ease=u=>u*u*(3-2*u),L=(a,b,u)=>a+(b-a)*u;
 function lp(a,b,u){const o={};for(const k in a)o[k]=[L(a[k][0],b[k][0],u),L(a[k][1],b[k][1],u)];return o}
@@ -595,20 +595,48 @@ function keys(t,list){for(let i=0;i<list.length-1;i++){const[t0,p0]=list[i],[t1,
 const STAND={H:[100,38],N:[100,50],P:[100,92],eA:[97,70],hA:[97,90],eB:[103,70],hB:[103,90],kA:[98,120],fA:[96,150],kB:[102,120],fB:[105,150]};
 const SP=o=>Object.assign({},STAND,o);
 let C={};
-function tok(){const s=getComputedStyle(document.documentElement);C={ink:s.getPropertyValue("--fg").trim(),muted:s.getPropertyValue("--muted").trim(),line:s.getPropertyValue("--line").trim(),rust:s.getPropertyValue("--rust").trim(),oil:s.getPropertyValue("--accent").trim(),good:s.getPropertyValue("--done").trim(),sweat:s.getPropertyValue("--sweat").trim(),card:s.getPropertyValue("--surface").trim()}}
+function tok(){const s=getComputedStyle(document.documentElement);C={ink:s.getPropertyValue("--fg").trim(),muted:s.getPropertyValue("--muted").trim(),line:s.getPropertyValue("--line").trim(),rust:s.getPropertyValue("--rust").trim(),oil:s.getPropertyValue("--accent").trim(),good:s.getPropertyValue("--done").trim(),sweat:s.getPropertyValue("--sweat").trim(),card:s.getPropertyValue("--surface").trim(),skin:s.getPropertyValue("--skin").trim(),skinD:s.getPropertyValue("--skin-d").trim(),hair:s.getPropertyValue("--hair").trim(),eye:s.getPropertyValue("--eye").trim(),mouth:s.getPropertyValue("--mouth").trim()}}
 function seg(x,a,b,w,col,al){x.globalAlpha=al;x.strokeStyle=col;x.lineWidth=w;x.lineCap="round";x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();x.globalAlpha=1}
 function dot(x,p,r,col){x.fillStyle=col;x.beginPath();x.arc(p[0],p[1],r,0,7);x.fill()}
-// Rusty's head lives in one function so it can be swapped for a caricature later
+// Xander's head: bobblehead caricature, front-facing on a side-view stick body
 function head(x,h,o){
-  const ink=C.ink,dir=o.dir||1;
-  x.fillStyle=C.card;x.strokeStyle=ink;x.lineWidth=3;x.beginPath();x.arc(h[0],h[1],9,0,7);x.fill();x.stroke();
-  x.strokeStyle=C.rust;x.lineWidth=3;x.beginPath();x.arc(h[0],h[1],9,Math.PI*1.08,Math.PI*1.92);x.stroke();
-  dot(x,[h[0]+3.5*dir,h[1]-1],1.4,ink);
-  x.strokeStyle=ink;x.lineWidth=1.6;x.beginPath();const m=o.mouth||"smile",mx=h[0]+4*dir,my=h[1]+4;
-  if(m==="smile")x.arc(mx,my-2,2.6,0.2,Math.PI-0.2);
-  else if(m==="grit"){x.moveTo(mx-3,my);x.lineTo(mx+3,my);x.moveTo(mx-3,my+1.5);x.lineTo(mx+3,my+1.5)}
-  else if(m==="oh")x.arc(mx,my,1.8,0,7);else x.arc(mx,my+2,2.6,Math.PI+0.3,-0.3);
-  x.stroke();
+  const ink=C.ink,cx=h[0],cy=h[1]-5,m=o.mouth||"smile";
+  const ell=(ex,ey,rx,ry,fill,stroke,w)=>{x.beginPath();x.ellipse(ex,ey,rx,ry,0,0,7);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=w||1.5;x.stroke()}};
+  // ears that stick out
+  ell(cx-12.6,cy+2,3.6,5,C.skin,ink,1.4);ell(cx+12.6,cy+2,3.6,5,C.skin,ink,1.4);
+  ell(cx-12.6,cy+2,1.4,2.6,C.skinD);ell(cx+12.6,cy+2,1.4,2.6,C.skinD);
+  // face
+  ell(cx,cy+1,11.4,13,C.skin,ink,2);
+  // hair: thick on top, straight fringe swept to his right
+  x.fillStyle=C.hair;x.beginPath();
+  x.moveTo(cx-11.6,cy+1);
+  x.bezierCurveTo(cx-13.5,cy-10,cx-7,cy-15.5,cx+1,cy-15.2);
+  x.bezierCurveTo(cx+9,cy-15,cx+13.5,cy-9,cx+11.6,cy+0);
+  x.lineTo(cx+10,cy-5);x.lineTo(cx+6.5,cy-4);x.lineTo(cx+4,cy-6.2);x.lineTo(cx+0.5,cy-4.6);
+  x.lineTo(cx-2.5,cy-6.4);x.lineTo(cx-5.8,cy-5);x.lineTo(cx-8.4,cy-6.8);x.lineTo(cx-10.6,cy-3);
+  x.closePath();x.fill();
+  // eyebrows
+  x.strokeStyle=C.hair;x.lineWidth=1.3;x.lineCap="round";
+  x.beginPath();x.moveTo(cx-7,cy-2.4);x.quadraticCurveTo(cx-4.5,cy-3.6,cx-2,cy-2.6);x.moveTo(cx+2,cy-2.6);x.quadraticCurveTo(cx+4.5,cy-3.6,cx+7,cy-2.4);x.stroke();
+  // big brown eyes
+  const squint=m==="grit";
+  [-4.5,4.5].forEach(dx=>{
+    if(squint){x.strokeStyle=ink;x.lineWidth=1.4;x.beginPath();x.moveTo(cx+dx-2.4,cy+0.6);x.lineTo(cx+dx+2.4,cy+0.6);x.stroke();return}
+    ell(cx+dx,cy+0.8,2.7,2.1,"#fff",ink,0.8);dot(x,[cx+dx+0.3,cy+0.9],1.5,C.eye);dot(x,[cx+dx+0.8,cy+0.3],0.5,"#fff");
+  });
+  // nose
+  x.strokeStyle=C.skinD;x.lineWidth=1.1;x.beginPath();x.moveTo(cx+0.4,cy+2.5);x.quadraticCurveTo(cx+1.8,cy+5.4,cx-0.6,cy+5.6);x.stroke();
+  // mouth
+  const my=cy+8.3;
+  if(m==="smile"){
+    x.fillStyle="#fff";x.strokeStyle=ink;x.lineWidth=1.2;x.beginPath();x.moveTo(cx-6.2,my-0.8);x.quadraticCurveTo(cx,my+5.4,cx+6.2,my-0.8);x.quadraticCurveTo(cx,my+0.6,cx-6.2,my-0.8);x.fill();x.stroke();
+    x.fillStyle=C.mouth;x.fillRect(cx-1.6,my-0.2,1.9,2.4); // the famous gap
+  }else if(m==="grit"){
+    x.fillStyle="#fff";x.strokeStyle=ink;x.lineWidth=1.1;x.beginPath();x.rect(cx-5,my-1,10,3.6);x.fill();x.stroke();
+    x.beginPath();x.moveTo(cx-5,my+0.8);x.lineTo(cx+5,my+0.8);for(let i=-2.5;i<=2.5;i+=2.5){x.moveTo(cx+i,my-1);x.lineTo(cx+i,my+2.6)}x.stroke();
+    x.fillStyle=C.mouth;x.fillRect(cx-1.3,my-0.9,1.5,1.6);
+  }else if(m==="oh"){ell(cx,my+0.6,2.2,2.8,C.mouth,ink,1.1)}
+  else{x.strokeStyle=ink;x.lineWidth=1.3;x.beginPath();x.arc(cx,my+3,3,Math.PI+0.4,-0.4);x.stroke()}
 }
 function fig(x,p,o={}){
   const ink=C.ink;
@@ -678,8 +706,8 @@ const DEMOS={
   const arm=s=>{const hx=103-11*Math.sin(ph+s);return[[(103+hx)/2-1,66+bob],[hx,84+bob]]};
   const[eA,hA]=arm(0),[eB,hB]=arm(Math.PI);
   fig(x,{H:[105,34+bob],N:[104,46+bob],P:[100,90+bob],eA,hA,eB,hB,kA,fA,kB,fB},{mouth:"smile"});
-  txt(x,"10% incline",200,64,{mono:1,size:10,col:C.good,align:"right"});
-  bubble(x,["so anyway, my left hip...","nose breathing, mate","this hill never ends","talk test: passing"][Math.floor(t*4)%4],96,18)}},
+  txt(x,"10% incline",208,40,{mono:1,size:10,col:C.good,align:"right"});
+  bubble(x,["my left hip, mate...","nose breathing","this hill never ends","talk test: passing"][Math.floor(t*4)%4],175,74)}},
  curl:{name:"Incline DB Curl",cue:"Elbow pinned, slow on the way down. 3 × 12, then a 2 min rest.",dur:15000,draw(x,t){
   ground(x);const reps=12,work=.85,cel=t>work,rt=cel?0:(t/work)*reps,u=rt%1;
   const a=cel?-1.2:(Math.PI/2)-(Math.PI/2+1.2)*Math.sin(u*Math.PI),e=[104,72],h=[e[0]+22*Math.cos(a),e[1]+22*Math.sin(a)];
