@@ -50,6 +50,15 @@ Open `condo-weights.pages.dev` on your phone and enter your email. Type in the c
 
 To let someone else in, add their email to the People policy (step 3.5). Each person only ever sees their own ticks and weights.
 
+## Adding or removing people
+
+1. Go to dash.cloudflare.com and sign in.
+2. In the left menu click **Zero Trust**, then **Access controls**, then **Policies**.
+3. Click **Condo Weights people**.
+4. In the **Emails** box, type the new person's email and press Enter. To remove someone, click the x on their email.
+5. Click **Save**. It works straight away, with no redeploy needed.
+6. Send them the link: https://condo-weights.pages.dev. They type their email, get a code, and they're in. Their log is their own.
+
 ## Changing the workout
 
 Edit `public/index.html` (the exercise lists sit near the top of the `<script>`), commit, and push. Cloudflare redeploys by itself in about a minute.
