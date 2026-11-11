@@ -99,6 +99,7 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
 .tick{flex:none;width:30px;height:30px;border-radius:8px;border:2px solid var(--line);background:transparent;cursor:pointer;display:grid;place-items:center;color:transparent;font-size:1.05rem;font-weight:700;margin-top:1px}
 .ex.done .tick,.isdone .tick{background:var(--done);border-color:var(--done);color:#fff}
 .exbody{flex:1;min-width:0;cursor:pointer}
+.rowplay{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--rust);cursor:pointer;font-size:.8rem;display:grid;place-items:center;padding-left:2px}
 .exname{font-weight:600;font-size:1rem}
 .ex.done .exname{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1.5px}
 .alt{font-size:.82rem;color:var(--muted)}
@@ -291,13 +292,14 @@ const GROUPS=[
   ["Russian Twists 15kg","Lying Toe Taps ×50",[12,12,12]],
   ["Back Hyperextension","Hanging Leg Raises ×12",null]]}
 ];
-GROUPS.forEach(g=>g.ex=g.ex.map((e,i)=>({id:g.id+i,g:g.id,name:e[0],alt:e[1],base:e[2],heavy:!!e[3],demo:e[4]||null})));
+const EXDEMO={legs0:"calf",legs1:"legext",legs2:"hamcurl",legs3:"bulgarian",legs4:"hipraise",chest0:"machbench",chest1:"dbpress",chest2:"dbfly",chest3:"inclpress",chest4:"inclfly",back0:"pulldown",back1:"row",back2:"csrow",back3:"shrug",back4:"cuban",arms0:"tripush",arms1:"dips",arms2:"floorpress",arms3:"punch",shoulders0:"fullraise",shoulders1:"arnold",shoulders2:"machpress",shoulders3:"extrot",shoulders4:"onepress",core0:"swing",core1:"crunch",core2:"sidebend",core3:"russian",core4:"hyper"};
+GROUPS.forEach(g=>g.ex=g.ex.map((e,i)=>({id:g.id+i,g:g.id,name:e[0],alt:e[1],base:e[2],heavy:!!e[3],demo:e[4]||EXDEMO[g.id+i]||null})));
 const ALLEX=GROUPS.flatMap(g=>g.ex);
 const BIG=["legs","chest","back"],SMALL=["arms","shoulders","core"];
-const WU=[["Cat-Cow","×10"],["Leg Swings","×10 each way"],["Hip Circles","×10 each way"],["Arm Circles","×10 each way"],["Thoracic Rotations","×8 each side"],["Inchworms","×5"],["World's Greatest Stretch","×3 each side","wgs"],["Deep Squat Hold","30s"]];
-const MOBH=[["Pigeon Pose","60s each side, +30s left","pigeon"],["90/90 Hip Switches","×10 each side"],["Couch Stretch","60s each side"],["Hip CARs","×5 each way"],["Cossack Squats","×8 each side"]];
-const MOBS=[["Shoulder CARs","×5 each way"],["Wall Slides","×12"],["Band Pull-aparts","×15"],["Thoracic Open Books","×8 each side"],["Sleeper Stretch","45s each side"],["Dead Hang","30 to 45s","hang"]];
-const CX=[["Plank alternates","3 min"],["Side Plank with dips","×2 each side"],["Supermans","×10"],["Toe Taps","×50"],["V-Sit-ups","×10"],["Hollow Body Hold","1 min"]];
+const WU=[["Cat-Cow","×10","catcow"],["Leg Swings","×10 each way","legswing"],["Hip Circles","×10 each way","hipcircle"],["Arm Circles","×10 each way","armcircle"],["Thoracic Rotations","×8 each side","throt"],["Inchworms","×5","inchworm"],["World's Greatest Stretch","×3 each side","wgs"],["Deep Squat Hold","30s","deepsquat"]];
+const MOBH=[["Pigeon Pose","60s each side, +30s left","pigeon"],["90/90 Hip Switches","×10 each side","9090"],["Couch Stretch","60s each side","couch"],["Hip CARs","×5 each way","hipcar"],["Cossack Squats","×8 each side","cossack"]];
+const MOBS=[["Shoulder CARs","×5 each way","shcar"],["Wall Slides","×12","wallslide"],["Band Pull-aparts","×15","pullapart"],["Thoracic Open Books","×8 each side","openbook"],["Sleeper Stretch","45s each side","sleeper"],["Dead Hang","30 to 45s","hang"]];
+const CX=[["Plank alternates","3 min","plank"],["Side Plank with dips","×2 each side","sideplank"],["Supermans","×10","superman"],["Toe Taps","×50","toetap"],["V-Sit-ups","×10","vsit"],["Hollow Body Hold","1 min","hollow"]];
 const FIN=["Deep Squat","Sissy Squat","Side Squat","Front Squat","Back Squat","Wall Sits","Calf Raises"];
 const Z2WHERE=["Condo treadmill","Bukit Timah Hill"];
 const WS=[["Set 1","2 min"],["Set 2","2 min"],["Set 3","2 min"],["Set 4","2 min"]];
@@ -461,13 +463,13 @@ function exHtml(e,d){
         ${e.alt?`<div class="alt">${usedAlt?"Main: <b>"+esc(e.name)+"</b>":"Alt: <b>"+esc(e.alt)+"</b>"}</div>`:""}
         <div class="target">${target}</div>
       </div>
+      ${e.demo?`<button class="rowplay" data-demo="${e.demo}" aria-label="Watch ${esc(e.name)} demo">▶</button>`:""}
     </div>
     <div class="setrow">${[0,1,2].map(i=>`<button class="set ${sets[i]?"on":""}" data-set="${e.id}" data-i="${i}" aria-pressed="${!!sets[i]}">Set ${i+1}</button>`).join("")}</div>
     <div class="log">
       <div class="sets">${[0,1,2].map(i=>`<label for="kg-${e.id}-${i}">Set ${i+1} kg<input id="kg-${e.id}-${i}" inputmode="decimal" data-kg="${e.id}" data-i="${i}" value="${esc(vals[i]??"")}" placeholder="${esc(ph[i]??"")}"></label>`).join("")}</div>
       ${e.alt?`<div class="chips"><button class="chip ${usedAlt?"":"on"}" data-use="${e.id}" data-v="main">${esc(e.name)}</button><button class="chip ${usedAlt?"on":""}" data-use="${e.id}" data-v="alt">${esc(e.alt)}</button></div>`:""}
       <div><h4 style="margin-bottom:6px">4th set</h4><div class="chips">${TECH.map(t=>`<button class="chip ${d.tech[e.id]===t?"on":""}" data-tech="${e.id}" data-v="${t}">${t}</button>`).join("")}</div></div>
-      ${e.demo?`<button class="linkbtn" data-demo="${e.demo}">▶ Watch Xander do it</button>`:""}
       <div class="hint">Type today's weights. Grey numbers are your last lift.</div>
     </div></li>`;
 }
@@ -641,7 +643,7 @@ function head(x,h,o){
 function fig(x,p,o={}){
   const ink=C.ink;
   seg(x,p.P,p.kA,4,ink,.4);seg(x,p.kA,p.fA,4,ink,.4);seg(x,p.N,p.eA,4,ink,.4);seg(x,p.eA,p.hA,4,ink,.4);
-  seg(x,p.N,p.P,4.5,ink,1);seg(x,p.P,p.kB,4.5,ink,1);seg(x,p.kB,p.fB,4.5,ink,1);seg(x,p.N,p.eB,4.5,ink,1);seg(x,p.eB,p.hB,4.5,ink,1);
+  if(p.S){x.strokeStyle=ink;x.lineWidth=4.5;x.lineCap="round";x.beginPath();x.moveTo(p.N[0],p.N[1]);x.quadraticCurveTo(p.S[0],p.S[1],p.P[0],p.P[1]);x.stroke()}else seg(x,p.N,p.P,4.5,ink,1);seg(x,p.P,p.kB,4.5,ink,1);seg(x,p.kB,p.fB,4.5,ink,1);seg(x,p.N,p.eB,4.5,ink,1);seg(x,p.eB,p.hB,4.5,ink,1);
   if(o.bicep)dot(x,[L(p.N[0],p.eB[0],.5)+o.bicep*.6,L(p.N[1],p.eB[1],.5)-o.bicep*.4],o.bicep,ink);
   ["P","kB","eB","N"].forEach(k=>dot(x,p[k],2.4,C.rust));
   head(x,p.H,o);
@@ -717,6 +719,224 @@ const DEMOS={
   txt(x,`${done}/${reps}`,190,30,{mono:1,size:16,col:C.rust,align:"right"});
   if(cel){txt(x,"GAINS",168,84,{size:20,col:C.rust});txt(x,"✦",146,70,{col:C.rust,size:11});txt(x,"✦",192,68,{col:C.rust,size:9})}}}
 };
+// ---------- shared props ----------
+const PR={
+ bench(x,x1,x2,y){x.fillStyle=C.line;x.fillRect(x1,y,x2-x1,6);x.fillRect(x1+6,y,4,G-y);x.fillRect(x2-10,y,4,G-y)},
+ slope(x,a,b){x.strokeStyle=C.line;x.lineCap="round";x.lineWidth=7;x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();
+   x.lineWidth=4;x.beginPath();x.moveTo(a[0]+4,a[1]);x.lineTo(a[0]+4,G);const m=[L(a[0],b[0],.65),L(a[1],b[1],.65)];x.moveTo(m[0],m[1]);x.lineTo(m[0],G);x.stroke()},
+ box(x,x1,y1,x2,y2){x.fillStyle=C.line;x.fillRect(x1,y1,x2-x1,y2-y1)},
+ post(x,px,y1){x.strokeStyle=C.muted;x.lineWidth=3;x.beginPath();x.moveTo(px,G);x.lineTo(px,y1);x.stroke()},
+ frame(x,px,top,ax){x.strokeStyle=C.muted;x.lineWidth=3;x.beginPath();x.moveTo(px,G);x.lineTo(px,top);x.lineTo(ax,top);x.stroke()},
+ cable(x,from,to){x.strokeStyle=C.muted;x.lineWidth=1.2;x.beginPath();x.moveTo(from[0],from[1]);x.lineTo(to[0],to[1]);x.stroke();dot(x,to,3,C.muted)},
+ db(x,p,a=0){x.save();x.translate(p[0],p[1]);x.rotate(a);x.fillStyle=C.ink;x.fillRect(-7,-1.5,14,3);x.fillRect(-9,-4.5,4,9);x.fillRect(5,-4.5,4,9);x.restore()},
+ kb(x,p){dot(x,[p[0],p[1]+8],6.5,C.ink);x.strokeStyle=C.ink;x.lineWidth=2;x.beginPath();x.arc(p[0],p[1]+1,4,Math.PI,0);x.stroke()},
+ bar(x,p,len=14){x.strokeStyle=C.ink;x.lineWidth=3;x.lineCap="round";x.beginPath();x.moveTo(p[0]-len,p[1]);x.lineTo(p[0]+len,p[1]);x.stroke()},
+ band(x,a,b){x.strokeStyle=C.rust;x.lineWidth=2.2;x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke()},
+ pad(x,p){x.fillStyle=C.muted;x.beginPath();x.arc(p[0],p[1],5,0,7);x.fill()},
+ wall(x,x1,x2){x.fillStyle=C.line;x.fillRect(x1,20,x2-x1,G-20)},
+ plate(x,p){x.strokeStyle=C.ink;x.lineWidth=3;x.beginPath();x.ellipse(p[0],p[1],3,8,0,0,7);x.stroke()},
+ mat(x,x1,x2){x.fillStyle=C.line;x.fillRect(x1,G-1,x2-x1,5)}
+};
+// build a pose: near limbs from e/h/k/f, far limbs offset unless given, head along the torso
+function mk(o){
+  const p={N:o.N,P:o.P,eB:o.e,hB:o.h,kB:o.k,fB:o.f};
+  p.eA=o.eA||[o.e[0]-3,o.e[1]+1];p.hA=o.hA||[o.h[0]-3,o.h[1]+1];p.kA=o.kA||[o.k[0]-4,o.k[1]+1];p.fA=o.fA||[o.f[0]-4,o.f[1]];
+  if(o.H)p.H=o.H;else{const dx=o.N[0]-o.P[0],dy=o.N[1]-o.P[1],l=Math.hypot(dx,dy)||1;p.H=[o.N[0]+dx/l*12,o.N[1]+dy/l*12]}
+  if(o.S)p.S=o.S;
+  return p;
+}
+const add=(p,dx,dy)=>{const o={};for(const k in p)o[k]=[p[k][0]+dx,p[k][1]+dy];return o};
+const with_=(p,o)=>Object.assign({},p,o);
+// generic demo: cycles through poses; reps for lifts, slow holds for stretches
+function D(id,name,dose,cue,poses,opt={}){
+  DEMOS[id]={name,cue:cue+" "+dose+".",dur:opt.dur||(opt.hold?10000:6500),draw(x,t){
+    if(opt.bg)opt.bg(x,t);if(!opt.noGround)ground(x);
+    const n=poses.length,R=opt.reps||(opt.hold?1:3),u=(t*R)%1,s=u*n,i=Math.floor(s)%n,f=s-Math.floor(s);
+    const mv=opt.hold?.3:.7,a=poses[i],b=poses[(i+1)%n];
+    const p=f<mv?lp(a,b,ease(f/mv)):lp(b,b,0);
+    fig(x,p,{mouth:opt.hold?(opt.mouth||"smile"):(i%2===0?"grit":"smile")});
+    if(opt.fg)opt.fg(x,p,t);
+    txt(x,dose,DW-8,18,{mono:1,size:11,col:C.rust,align:"right",w:700});
+  }};
+}
+const dbs=(x,p)=>{PR.db(x,p.hB);PR.db(x,p.hA)};
+
+// ===== LEGS =====
+{const A=mk({N:[100,40],P:[100,82],e:[101,61],h:[101,80],k:[102,110],f:[106,138],kA:[96,110],fA:[84,122]});
+ D("calf","Single Leg Calf Raise","3 × 12 each leg","Ball of one foot on the step, heel hangs off. Rise all the way up, lower slowly below the step.",[A,add(A,0,-8)],
+  {bg:x=>PR.box(x,86,138,140,150),fg:(x,p)=>PR.db(x,p.hB)});}
+{const A=mk({N:[82,66],P:[88,110],H:[80,54],e:[88,86],h:[96,108],k:[114,110],f:[116,140]}),B=with_(A,{fB:[142,108],fA:[138,109]});
+ D("legext","Leg Extensions","3 × 12","Sit tall, pad on your shins. Kick up until straight, squeeze the quads, lower slowly.",[A,B],
+  {bg:x=>{PR.box(x,70,110,112,118);PR.slope(x,[72,110],[66,64]);PR.post(x,120,104)},fg:(x,p)=>PR.pad(x,p.fB)});}
+{const A=mk({N:[132,106],P:[92,108],H:[146,100],e:[140,118],h:[148,124],k:[62,108],f:[34,108]}),B=with_(A,{fB:[56,80],fA:[52,81]});
+ D("hamcurl","Hamstring Curls","3 × 12","Face down, pad just above the heels. Curl heels to bum, hips stay down, lower slowly.",[A,B],
+  {bg:x=>PR.bench(x,44,152,114),fg:(x,p)=>PR.pad(x,p.fB)});}
+{const A=mk({N:[100,54],P:[98,96],e:[102,74],h:[103,94],k:[118,122],f:[122,150],kA:[78,118],fA:[56,124]}),
+  B=mk({N:[98,76],P:[94,118],e:[100,96],h:[101,116],k:[126,124],f:[122,150],kA:[80,144],fA:[56,124]});
+ D("bulgarian","Bulgarian Split Squat","3 × 10 each leg","Back foot on the bench, drop the back knee straight down, drive up through the front heel.",[A,B],
+  {bg:x=>PR.bench(x,30,64,124),fg:dbs});}
+{const A=mk({N:[144,144],P:[114,146],H:[156,138],e:[128,149],h:[110,149],k:[92,124],f:[82,150]}),B=with_(A,{P:[116,118]});
+ D("hipraise","Plyo Hip Raise","× 15","On your back, knees bent. Drive the hips up hard and fast, squeeze the glutes at the top.",[A,B],{bg:x=>PR.mat(x,60,170)});}
+
+// ===== CHEST =====
+{const A=mk({N:[88,64],P:[88,108],H:[88,52],e:[80,82],h:[102,68],k:[116,108],f:[118,140]}),B=with_(A,{eB:[112,66],hB:[130,64],eA:[109,67],hA:[127,65]});
+ D("machbench","Heavy Machine Bench","Heavy × 7","Back flat on the pad, handles at chest height. Press out without locking out, control it back.",[A,B],
+  {bg:x=>{PR.box(x,70,108,110,116);PR.slope(x,[78,108],[78,50]);PR.frame(x,150,40,140)},fg:(x,p)=>{PR.cable(x,p.hB,[150,64]);PR.bar(x,p.hB,4)}});}
+{const L1={N:[134,112],P:[88,114],H:[148,106],k:[66,118],f:[60,150]};
+ const A=mk({...L1,e:[122,122],h:[124,100]}),B=mk({...L1,e:[126,96],h:[128,76]});
+ D("dbpress","Neutral Grip DB Press","3 × 10","Palms facing each other, dumbbells beside the chest. Press up and slightly together.",[A,B],{bg:x=>PR.bench(x,70,152,118),fg:dbs});
+ const F1=mk({...L1,e:[118,116],h:[112,124]}),F2=mk({...L1,e:[126,98],h:[128,80]});
+ D("dbfly","DB Fly + Hex","3 × 10","Arms wide with soft elbows, hug a big tree up to the top, then squeeze the dumbbells together.",[F1,F2],{bg:x=>PR.bench(x,70,152,118),fg:dbs});}
+{const I={N:[120,84],P:[86,118],k:[110,122],f:[112,150]};
+ const A=mk({...I,e:[118,110],h:[132,98]}),B=mk({...I,e:[136,88],h:[154,76]});
+ D("inclpress","Incline DB Press","3 × 10","Bench at about 30 degrees. Lower to the upper chest, press up over the shoulders.",[A,B],
+  {bg:x=>{PR.box(x,70,122,100,128);PR.slope(x,[82,122],[130,76])},fg:dbs});
+ const C1=mk({...I,e:[114,104],h:[114,118]}),C2=mk({...I,e:[136,88],h:[152,78]});
+ D("inclfly","Incline DB Fly","3 × 10","Same incline. Open wide with soft elbows, feel the stretch, then hug back up.",[C1,C2],
+  {bg:x=>{PR.box(x,70,122,100,128);PR.slope(x,[82,122],[130,76])},fg:dbs});}
+
+// ===== BACK =====
+{const S={N:[96,72],P:[100,114],k:[126,112],f:[128,146]};
+ const A=mk({...S,e:[104,42],h:[106,22]}),B=mk({...S,e:[88,90],h:[104,74]});
+ D("pulldown","Front Pull-downs","Heavy × 7","Lean back slightly, pull the bar to the top of the chest, elbows down and back. Wide, mid, then close grip.",[A,B],
+  {bg:x=>{PR.box(x,84,114,118,120);PR.frame(x,150,6,104)},fg:(x,p)=>{PR.cable(x,p.hB,[106,6]);PR.bar(x,p.hB,16);PR.pad(x,[126,106])}});}
+{const S={N:[86,74],P:[84,116],k:[112,106],f:[128,130]};
+ const A=mk({...S,e:[108,82],h:[132,84]}),B=mk({...S,e:[66,88],h:[92,86]});
+ D("row","Seated Machine Rows","Heavy × 7","Chest tall, pull the handles to your belly, squeeze the shoulder blades together, slow return.",[A,B],
+  {bg:x=>{PR.box(x,66,116,104,122);PR.frame(x,160,70,150);PR.box(x,124,126,134,146)},fg:(x,p)=>{PR.cable(x,p.hB,[160,86]);PR.bar(x,p.hB,4)}});}
+{const S={N:[118,96],P:[78,128],H:[130,88],k:[66,138],f:[56,150]};
+ const A=mk({...S,e:[118,118],h:[118,140]}),B=mk({...S,e:[96,98],h:[106,116]});
+ D("csrow","Chest-Supported Incline Row","3 × 10","Chest on the incline pad. Row the dumbbells up and back, pause, lower all the way.",[A,B],
+  {bg:x=>PR.slope(x,[74,136],[126,98]),fg:dbs});}
+{const A=mk({N:[100,50],P:[100,92],e:[101,70],h:[101,90],k:[102,120],f:[105,150]}),B=with_(add(A,0,0),{N:[100,43],H:[100,31],eB:[101,63],hB:[101,83],eA:[98,64],hA:[98,84]});
+ D("shrug","Shrugs (Heavy)","3 × 12","Heavy dumbbells at your sides. Shoulders straight up to the ears, hold a second, lower slowly.",[A,B],
+  {fg:(x,p,t)=>{dbs(x,p);if(p.N[1]<46){txt(x,"^",88,48,{col:C.rust,size:14});txt(x,"^",112,48,{col:C.rust,size:14})}}});}
+{const base={N:[100,50],P:[100,92],k:[102,120],f:[105,150]};
+ const A=mk({...base,e:[101,70],h:[101,90]}),B=mk({...base,e:[112,52],h:[108,70]}),C2=mk({...base,e:[112,52],h:[112,32]}),Dp=mk({...base,e:[104,28],h:[103,8]});
+ D("cuban","Cuban Press","3 × 10","Light weight. Upright row to the elbows, rotate the forearms up, then press overhead. Reverse it down.",[A,B,C2,Dp,C2,B],{fg:dbs,reps:1,dur:8000});}
+
+// ===== ARMS =====
+{const S={N:[104,50],P:[100,92],k:[102,120],f:[105,150]};
+ const A=mk({...S,e:[106,72],h:[114,56]}),B=mk({...S,e:[106,72],h:[108,94]});
+ D("tripush","Machine Pull-downs (Tris)","3 × 12","Elbows pinned to your sides, push the bar down until the arms are straight, slow on the way up.",[A,B],
+  {bg:x=>PR.frame(x,150,6,118),fg:(x,p)=>{PR.cable(x,p.hB,[118,6]);PR.bar(x,p.hB,7)}});}
+{const A=mk({N:[100,58],P:[98,100],e:[101,73],h:[102,88],k:[96,122],f:[82,128]}),B=mk({N:[100,78],P:[98,118],e:[86,70],h:[102,88],k:[96,140],f:[82,146]});
+ D("dips","Dips","× 12","Hands on the bars, lean slightly forward, lower until the elbows hit 90 degrees, press back up.",[A,B],
+  {bg:x=>{PR.post(x,86,88);PR.post(x,118,88);x.strokeStyle=C.muted;x.lineWidth=3;x.beginPath();x.moveTo(84,88);x.lineTo(120,88);x.stroke()}});}
+{const F={N:[134,142],P:[92,144],H:[148,136],k:[70,124],f:[56,150]};
+ const A=mk({...F,e:[122,148],h:[126,128]}),B=mk({...F,e:[128,120],h:[130,100]});
+ D("floorpress","DB Floor Press","3 × 10","On the floor, knees bent. Elbows touch down softly, press straight up, close grip for triceps.",[A,B],{bg:x=>PR.mat(x,50,170),fg:dbs});}
+{const S={N:[118,62],P:[94,94],k:[106,122],f:[100,150]};
+ const A=mk({...S,e:[134,64],h:[150,62],eA:[110,74],hA:[118,62]}),B=mk({...S,e:[110,74],h:[118,62],eA:[134,64],hA:[150,62]});
+ D("punch","Bent Over Punches","× 50","Light dumbbells, slight bend at the hips. Punch out fast, one arm after the other.",[A,B],{fg:dbs,reps:6});}
+
+// ===== SHOULDERS =====
+{const base={N:[100,50],P:[100,92],k:[102,120],f:[105,150]};
+ const A=mk({...base,e:[101,70],h:[101,90]}),B=mk({...base,e:[118,54],h:[136,54]}),C2=mk({...base,e:[106,32],h:[110,12]});
+ D("fullraise","Full Raise, Slow Lower","3 × 10","Straight arms up in front all the way overhead, then take 4 seconds to lower.",[A,B,C2,B],{fg:dbs,reps:2,dur:8000});
+ const P1=mk({...base,e:[112,66],h:[104,48]}),P2=mk({...base,e:[106,30],h:[104,10]});
+ D("arnold","Arnold Raises","3 × 10","Start palms facing you at chin height, rotate the palms out as you press overhead.",[P1,P2],{fg:dbs});
+ const O1=mk({...base,e:[112,62],h:[106,44],eA:[94,72],hA:[96,90]}),O2=mk({...base,e:[104,28],h:[103,8],eA:[94,72],hA:[96,90]});
+ D("onepress","1 Arm Press Up","3 × 10 each arm","One dumbbell, other hand on your hip. Brace the core and press straight up without leaning.",[O1,O2],{fg:(x,p)=>PR.db(x,p.hB)});
+ const R1=mk({...base,e:[102,72],h:[122,74]}),R2=mk({...base,e:[102,72],h:[106,74]});
+ D("extrot","External Rotation","3 × 12","Elbow tucked at your side, bent to 90 degrees. Rotate the hand out away from your belly, slow back in.",[R1,R2],
+  {bg:x=>PR.post(x,40,60),fg:(x,p)=>PR.band(x,[40,74],p.hB)});}
+{const S={N:[100,72],P:[100,114],k:[124,114],f:[126,148]};
+ const A=mk({...S,e:[110,82],h:[110,62]}),B=mk({...S,e:[106,52],h:[106,32]});
+ D("machpress","Machine Shoulder Press","Heavy × 7","Sit tall, handles at shoulder height. Press up without arching your back, control it down.",[A,B],
+  {bg:x=>{PR.box(x,84,114,118,120);PR.slope(x,[88,114],[88,58])},fg:(x,p)=>PR.bar(x,p.hB,5)});}
+
+// ===== CORE =====
+{const A=mk({N:[120,72],P:[90,98],e:[114,96],h:[106,116],k:[104,122],f:[102,150]}),B=mk({N:[100,50],P:[100,92],e:[116,60],h:[132,58],k:[102,120],f:[105,150]});
+ D("swing","Hip Hinge + KB Swing","15 + 30","Hinge back with a flat back, then snap the hips forward to float the bell to chest height. Arms just hold on.",[A,B],{fg:(x,p)=>PR.kb(x,p.hB),reps:4});}
+{const S={P:[96,120],k:[70,98],f:[52,110]};
+ const A=mk({...S,N:[136,132],H:[150,132],e:[142,122],h:[146,128]}),B=mk({...S,N:[116,92],e:[124,82],h:[120,88]});
+ D("crunch","Decline Crunch + Twist","× 12","Feet hooked, hands by your head. Curl up, twist elbow to the opposite knee, lower slowly.",[A,B],
+  {bg:x=>{PR.slope(x,[44,104],[150,136]);PR.pad(x,[52,104])}});}
+{const A={N:[100,50],P:[100,92],H:[100,38],eA:[90,70],hA:[87,92],eB:[110,70],hB:[113,92],kA:[93,120],fA:[89,150],kB:[107,120],fB:[111,150]};
+ const B=with_(A,{N:[110,53],H:[115,42],eB:[118,74],hB:[121,98],eA:[100,70],hA:[96,88]});
+ D("sidebend","DB Side Bend","3 × 12 each side","Dumbbell in one hand, other hand on your head or hip. Bend sideways down, then pull back up with the obliques.",[A,B,A,with_(A,{N:[90,53],H:[85,42],eA:[82,74],hA:[79,98],eB:[100,70],hB:[104,88]})],
+  {fg:(x,p)=>PR.db(x,p.hB,Math.PI/2),reps:2});}
+{const S={N:[118,104],P:[100,140],k:[80,116],f:[60,128]};
+ const A=mk({...S,e:[124,122],h:[134,122]}),B=mk({...S,e:[110,124],h:[102,128]});
+ D("russian","Russian Twists","× 20","Sit back, feet up, weight in both hands. Twist side to side, follow the weight with your eyes.",[A,B],{fg:(x,p)=>PR.plate(x,p.hB),reps:5});}
+{const S={P:[96,100],k:[80,122],f:[62,146]};
+ const A=mk({...S,N:[108,132],H:[112,142],e:[114,124],h:[118,128]}),B=mk({...S,N:[128,76],e:[124,86],h:[130,84]});
+ D("hyper","Back Hyperextension","3 × 12","Hips on the pad, arms crossed. Lower with a flat back, rise until your body is a straight line. Don't over-arch.",[A,B],
+  {bg:x=>{PR.slope(x,[60,142],[100,104]);PR.pad(x,[62,144])}});}
+
+// ===== WARM-UP =====
+{const Q={P:[90,118],k:[92,148],f:[62,150],e:[130,134],h:[130,150]};
+ const A=mk({...Q,N:[128,118],H:[140,128],S:[110,104]}),B=mk({...Q,N:[128,120],H:[140,106],S:[110,130]});
+ D("catcow","Cat-Cow","× 10","On hands and knees. Round the back up and tuck the chin, then drop the belly and look up.",[A,B],{hold:1,reps:3,dur:9000,bg:x=>PR.mat(x,50,170)});}
+{const S={N:[100,50],P:[100,92],e:[118,66],h:[136,72],kA:[100,120],fA:[100,150]};
+ const A=mk({...S,k:[118,112],f:[134,136]}),B=mk({...S,k:[88,118],f:[72,140]});
+ D("legswing","Leg Swings","× 10 each way","Hand on the wall, swing one leg forward and back like a pendulum. Keep the body still.",[A,B],{reps:4,bg:x=>PR.wall(x,138,150)});}
+{const S={N:[100,50],e:[110,72],h:[104,90],k:[102,120],f:[105,150]};
+ const ps=[[106,92],[100,97],[94,92],[100,87]].map(P0=>mk({...S,P:P0}));
+ D("hipcircle","Hip Circles","× 10 each way","Hands on hips, feet wide. Draw big slow circles with your hips.",ps,{reps:2});}
+DEMOS.armcircle={name:"Arm Circles",cue:"Arms out, small circles growing bigger. Forward 10, then backward 10.",dur:6000,draw(x,t){
+  ground(x);const a=t*Math.PI*2*3,N0=[100,50],e=[N0[0]+18*Math.cos(a),N0[1]+18*Math.sin(a)],h=[N0[0]+36*Math.cos(a),N0[1]+36*Math.sin(a)];
+  const b=a+Math.PI,eA=[N0[0]+18*Math.cos(b),N0[1]+18*Math.sin(b)],hA=[N0[0]+36*Math.cos(b),N0[1]+36*Math.sin(b)];
+  fig(x,mk({N:N0,P:[100,92],e,h,eA,hA,k:[102,120],f:[105,150]}),{mouth:"smile"});txt(x,"× 10 each way",DW-8,18,{mono:1,size:11,col:C.rust,align:"right"})}};
+{const Q={N:[128,118],P:[90,118],k:[92,148],f:[62,150],eA:[130,134],hA:[130,150]};
+ const A=mk({...Q,e:[124,140],h:[128,128]}),B=mk({...Q,e:[124,94],h:[118,104]});
+ D("throt","Thoracic Rotations","× 8 each side","On hands and knees, one hand behind your head. Point the elbow at the floor, then rotate it up to the ceiling.",[A,B],{reps:3,bg:x=>PR.mat(x,50,170)});}
+{const A=mk({N:[100,50],P:[100,92],e:[101,70],h:[101,90],k:[102,120],f:[105,150]});
+ const B=mk({N:[118,118],P:[100,92],e:[118,134],h:[118,150],k:[102,120],f:[105,150]});
+ const C2=mk({N:[148,116],P:[104,128],e:[150,132],h:[150,150],k:[82,140],f:[60,150]});
+ D("inchworm","Inchworms","× 5","Fold forward, hands to the floor, walk them out to a plank, then walk them back and stand up.",[A,B,C2,B],{reps:1,dur:8000});}
+{const A=mk({N:[104,94],P:[92,136],e:[116,112],h:[122,100],k:[118,116],f:[106,150]});
+ D("deepsquat","Deep Squat Hold","30s","Sink as low as you can, heels down, elbows pushing the knees out, chest up.",[A,add(A,0,2)],{hold:1,reps:3});}
+
+// ===== HIP MOBILITY =====
+{const A={N:[100,98],P:[100,140],H:[100,86],eA:[88,124],hA:[82,146],eB:[112,124],hB:[118,146],kB:[126,128],fB:[142,148],kA:[120,138],fA:[104,148]};
+ const B=with_(A,{kB:[74,128],fB:[58,148],kA:[80,138],fA:[96,148]});
+ D("9090","90/90 Hip Switches","× 10 each side","Sit with both knees bent to 90 degrees. Rotate both knees over to the other side without using your hands if you can.",[A,B],{reps:3,bg:x=>PR.mat(x,50,170)});}
+{const A=mk({N:[86,80],P:[82,122],e:[104,104],h:[116,120],k:[118,122],f:[120,150],kA:[56,148],fA:[44,110]});
+ D("couch","Couch Stretch","60s each side","Back knee on the floor against a wall, foot up the wall. Squeeze the glute and sit tall.",[A,with_(A,{P:[86,126],N:[90,84],H:[92,72]})],
+  {hold:1,reps:2,bg:x=>PR.wall(x,26,42)});}
+{const S={N:[100,50],P:[100,92],e:[118,66],h:[136,72],kA:[100,120],fA:[100,150]};
+ const ps=[mk({...S,k:[102,120],f:[105,150]}),mk({...S,k:[124,96],f:[126,124]}),mk({...S,k:[108,98],f:[98,122]}),mk({...S,k:[86,112],f:[70,128]})];
+ D("hipcar","Hip CARs","× 5 each way","Hand on the wall. Lift the knee up, open it out to the side, take it back, then down. Biggest circle you can.",ps,{reps:1,dur:7000,bg:x=>PR.wall(x,138,150)});}
+{const A={N:[116,86],P:[118,128],H:[118,74],eB:[124,104],hB:[116,112],eA:[110,104],hA:[114,112],kB:[138,124],fB:[140,150],kA:[90,140],fA:[60,150]};
+ const B={N:[84,86],P:[82,128],H:[82,74],eB:[90,104],hB:[86,112],eA:[76,104],hA:[84,112],kB:[62,124],fB:[60,150],kA:[110,140],fA:[140,150]};
+ D("cossack","Cossack Squats","× 8 each side","Wide stance. Sit down into one hip with the other leg straight, toes up. Shift across to the other side.",[A,B],{reps:2,dur:7000});}
+
+// ===== SHOULDER MOBILITY =====
+DEMOS.shcar={name:"Shoulder CARs",cue:"One arm, slow and controlled. Reach forward, up, back and around in the biggest circle you can. × 5 each way.",dur:8000,draw(x,t){
+  ground(x);const a=-Math.PI/2+Math.sin(t*Math.PI*2)*Math.PI,N0=[100,50];
+  const e=[N0[0]+18*Math.cos(a+1.4),N0[1]+18*Math.sin(a+1.4)],h=[N0[0]+36*Math.cos(a+1.4),N0[1]+36*Math.sin(a+1.4)];
+  fig(x,mk({N:N0,P:[100,92],e,h,eA:[97,70],hA:[97,90],k:[102,120],f:[105,150]}),{mouth:"smile"});txt(x,"× 5 each way",DW-8,18,{mono:1,size:11,col:C.rust,align:"right"})}};
+{const legs={kA:[94,120],fA:[92,150],kB:[106,120],fB:[108,150]};
+ const A={N:[100,50],P:[100,92],H:[100,38],eA:[84,58],hA:[80,38],eB:[116,58],hB:[120,38],...legs},B=with_(A,{eA:[88,34],hA:[80,14],eB:[112,34],hB:[120,14]});
+ D("wallslide","Wall Slides","× 12","Back, head and arms against the wall. Slide the arms up into a Y, then pull back down into a W.",[A,B],{bg:x=>PR.box(x,60,20,140,G)});
+ const P1={N:[100,50],P:[100,92],H:[100,38],eA:[94,62],hA:[97,64],eB:[106,62],hB:[103,64],...legs},P2=with_(P1,{eA:[80,58],hA:[60,58],eB:[120,58],hB:[140,58]});
+ D("pullapart","Band Pull-aparts","× 15","Arms straight out in front, band in both hands. Pull it apart to your chest, squeeze the shoulder blades.",[P1,P2],{fg:(x,p)=>PR.band(x,p.hA,p.hB)});}
+{const S={N:[136,144],P:[96,146],H:[150,138],k:[112,128],f:[88,130],eA:[150,148],hA:[166,148]};
+ const A=mk({...S,e:[150,140],h:[166,142]}),B=mk({...S,e:[136,122],h:[118,132]});
+ D("openbook","Thoracic Open Books","× 8 each side","Lie on your side, knees bent, arms together in front. Open the top arm over to the other side and follow it with your eyes.",[A,B],{hold:1,reps:3,dur:9000,bg:x=>PR.mat(x,50,180)});}
+{const S={N:[136,144],P:[96,146],H:[150,138],k:[112,128],f:[88,130],e:[150,146]};
+ const A=mk({...S,h:[150,126],eA:[140,132],hA:[148,124]}),B=mk({...S,h:[162,138],eA:[146,128],hA:[160,134]});
+ D("sleeper","Sleeper Stretch","45s each side","Lie on the side you're stretching, arm out at 90 degrees. Use the other hand to gently push the forearm down.",[A,B],{hold:1,reps:2,bg:x=>PR.mat(x,50,180)});}
+
+// ===== CORE EXTRAS =====
+{const A=mk({N:[130,130],P:[90,132],H:[142,124],e:[130,150],h:[146,150],k:[66,138],f:[44,150]}),B=with_(A,{kB:[62,126],fB:[34,120]});
+ D("plank","Plank alternates","3 min","Forearm plank, straight line from head to heels. Lift one leg, then the other.",[A,B],{reps:3,dur:8000,bg:x=>PR.mat(x,30,170)});}
+{const A=mk({N:[126,128],P:[90,136],H:[136,118],e:[128,150],h:[142,150],eA:[108,118],hA:[96,134],k:[64,142],f:[40,148]}),B=with_(A,{P:[90,146]});
+ D("sideplank","Side Plank with dips","× 2 each side","On one forearm, hips stacked. Dip the hips toward the floor and lift back up.",[A,B],{reps:3,bg:x=>PR.mat(x,30,170)});}
+{const A=mk({N:[128,146],P:[90,148],H:[142,142],e:[146,148],h:[164,148],k:[64,148],f:[38,148]});
+ const B=mk({N:[128,140],P:[90,148],H:[142,132],e:[146,134],h:[164,128],k:[62,144],f:[36,134]});
+ D("superman","Supermans","× 10","Face down, arms overhead. Lift arms, chest and legs off the floor, hold 2 seconds, lower.",[A,B],{bg:x=>PR.mat(x,30,180)});}
+{const T={N:[136,146],P:[96,146],H:[150,140],e:[120,148],h:[104,148],k:[96,118],f:[72,118]};
+ const A=mk(T),B=with_(A,{fB:[70,148]}),C2=with_(A,{fA:[66,148]});
+ D("toetap","Toe Taps","× 50","On your back, knees bent at 90 above the hips. Lower one foot to tap the floor, then the other. Back stays flat.",[A,B,A,C2],{reps:2,bg:x=>PR.mat(x,50,170)});}
+{const A=mk({N:[140,146],P:[100,146],H:[152,140],e:[160,146],h:[178,146],k:[74,146],f:[48,146]});
+ const B=mk({N:[126,108],P:[100,146],e:[108,104],h:[88,96],k:[80,118],f:[66,92]});
+ D("vsit","V-Sit-ups","× 10","Lie flat, arms overhead. Lift arms and legs together to meet in a V, lower with control.",[A,B],{bg:x=>PR.mat(x,40,182)});}
+{const A=mk({N:[132,136],P:[100,146],e:[150,130],h:[168,124],k:[76,140],f:[52,132]});
+ D("hollow","Hollow Body Hold","1 min","Lower back pressed into the floor, arms and legs long and just off the ground. Breathe.",[A,add(A,0,2)],{hold:1,reps:4,mouth:"grit",bg:x=>PR.mat(x,40,182)});}
+
 let demoId=null,demoRAF=0,demoStart=0;
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function openDemo(id){
