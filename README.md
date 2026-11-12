@@ -61,4 +61,4 @@ To let someone else in, add their email to the People policy (step 3.5). Each pe
 
 ## Changing the workout
 
-Edit `public/index.html` (the exercise lists sit near the top of the `<script>`), commit, and push. Cloudflare redeploys by itself in about a minute.
+Edit `src/page.html` (the exercise lists sit near the top of the `<script>`), run `python3 scripts/build.py` to rebuild `public/index.html`, then commit and push. Cloudflare redeploys by itself in about a minute.
