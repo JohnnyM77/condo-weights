@@ -641,11 +641,14 @@ function head(x,h,o){
   else{x.strokeStyle=ink;x.lineWidth=1.3;x.beginPath();x.arc(cx,my+3,3,Math.PI+0.4,-0.4);x.stroke()}
 }
 function fig(x,p,o={}){
-  const ink=C.ink;
-  seg(x,p.P,p.kA,4,ink,.4);seg(x,p.kA,p.fA,4,ink,.4);seg(x,p.N,p.eA,4,ink,.4);seg(x,p.eA,p.hA,4,ink,.4);
-  if(p.S){x.strokeStyle=ink;x.lineWidth=4.5;x.lineCap="round";x.beginPath();x.moveTo(p.N[0],p.N[1]);x.quadraticCurveTo(p.S[0],p.S[1],p.P[0],p.P[1]);x.stroke()}else seg(x,p.N,p.P,4.5,ink,1);seg(x,p.P,p.kB,4.5,ink,1);seg(x,p.kB,p.fB,4.5,ink,1);seg(x,p.N,p.eB,4.5,ink,1);seg(x,p.eB,p.hB,4.5,ink,1);
+  const ink=C.ink,front=!!p.sA,fa=front?1:.4,w2=front?4.5:4;
+  const shA=p.sA||p.N,shB=p.sB||p.N,hpA=p.qA||p.P,hpB=p.qB||p.P;
+  seg(x,hpA,p.kA,w2,ink,fa);seg(x,p.kA,p.fA,w2,ink,fa);seg(x,shA,p.eA,w2,ink,fa);seg(x,p.eA,p.hA,w2,ink,fa);
+  if(p.S){x.strokeStyle=ink;x.lineWidth=4.5;x.lineCap="round";x.beginPath();x.moveTo(p.N[0],p.N[1]);x.quadraticCurveTo(p.S[0],p.S[1],p.P[0],p.P[1]);x.stroke()}else seg(x,p.N,p.P,4.5,ink,1);
+  if(front){seg(x,p.sA,p.sB,4.5,ink,1);seg(x,p.qA,p.qB,4.5,ink,1)}
+  seg(x,hpB,p.kB,4.5,ink,1);seg(x,p.kB,p.fB,4.5,ink,1);seg(x,shB,p.eB,4.5,ink,1);seg(x,p.eB,p.hB,4.5,ink,1);
   if(o.bicep)dot(x,[L(p.N[0],p.eB[0],.5)+o.bicep*.6,L(p.N[1],p.eB[1],.5)-o.bicep*.4],o.bicep,ink);
-  ["P","kB","eB","N"].forEach(k=>dot(x,p[k],2.4,C.rust));
+  (front?["kA","kB","eA","eB","sA","sB"]:["P","kB","eB","N"]).forEach(k=>dot(x,p[k],2.4,C.rust));
   head(x,p.H,o);
 }
 function ground(x,y=G){x.strokeStyle=C.line;x.lineWidth=2;x.beginPath();x.moveTo(8,y);x.lineTo(DW-8,y);x.stroke()}
@@ -728,7 +731,7 @@ const PR={
  post(x,px,y1){x.strokeStyle=C.muted;x.lineWidth=3;x.beginPath();x.moveTo(px,G);x.lineTo(px,y1);x.stroke()},
  frame(x,px,top,ax){x.strokeStyle=C.muted;x.lineWidth=3;x.beginPath();x.moveTo(px,G);x.lineTo(px,top);x.lineTo(ax,top);x.stroke()},
  cable(x,from,to){x.strokeStyle=C.muted;x.lineWidth=1.2;x.beginPath();x.moveTo(from[0],from[1]);x.lineTo(to[0],to[1]);x.stroke();dot(x,to,3,C.muted)},
- db(x,p,a=0){x.save();x.translate(p[0],p[1]);x.rotate(a);x.fillStyle=C.ink;x.fillRect(-7,-1.5,14,3);x.fillRect(-9,-4.5,4,9);x.fillRect(5,-4.5,4,9);x.restore()},
+ db(x,p,a=0,k=1){x.save();x.translate(p[0],p[1]);x.rotate(a);x.scale(k,k);x.fillStyle=C.ink;x.fillRect(-7,-1.5,14,3);x.fillRect(-9,-4.5,4,9);x.fillRect(5,-4.5,4,9);x.restore()},
  kb(x,p){dot(x,[p[0],p[1]+8],6.5,C.ink);x.strokeStyle=C.ink;x.lineWidth=2;x.beginPath();x.arc(p[0],p[1]+1,4,Math.PI,0);x.stroke()},
  bar(x,p,len=14){x.strokeStyle=C.ink;x.lineWidth=3;x.lineCap="round";x.beginPath();x.moveTo(p[0]-len,p[1]);x.lineTo(p[0]+len,p[1]);x.stroke()},
  band(x,a,b){x.strokeStyle=C.rust;x.lineWidth=2.2;x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke()},
@@ -748,17 +751,24 @@ function mk(o){
 const add=(p,dx,dy)=>{const o={};for(const k in p)o[k]=[p[k][0]+dx,p[k][1]+dy];return o};
 const with_=(p,o)=>Object.assign({},p,o);
 // generic demo: cycles through poses; reps for lifts, slow holds for stretches
-function D(id,name,dose,cue,poses,opt={}){
+function DV(id,name,dose,cue,views,opt={}){
   DEMOS[id]={name,cue:cue+" "+dose+".",dur:opt.dur||(opt.hold?10000:6500),draw(x,t){
-    if(opt.bg)opt.bg(x,t);if(!opt.noGround)ground(x);
-    const n=poses.length,R=opt.reps||(opt.hold?1:3),u=(t*R)%1,s=u*n,i=Math.floor(s)%n,f=s-Math.floor(s);
-    const mv=opt.hold?.3:.7,a=poses[i],b=poses[(i+1)%n];
-    const p=f<mv?lp(a,b,ease(f/mv)):lp(b,b,0);
-    fig(x,p,{mouth:opt.hold?(opt.mouth||"smile"):(i%2===0?"grit":"smile")});
-    if(opt.fg)opt.fg(x,p,t);
+    const R=opt.reps||(opt.hold?1:3),u=(t*R)%1,mv=opt.hold?.3:.7;
+    let mouth="smile";
+    views.forEach(v=>{
+      const n=v.poses.length,sg=u*n,i=Math.floor(sg)%n,f=sg-Math.floor(sg),a=v.poses[i],b=v.poses[(i+1)%n];
+      const p=f<mv?lp(a,b,ease(f/mv)):lp(b,b,0),ph=f<mv?ease(f/mv):1;
+      mouth=opt.hold?(opt.mouth||"smile"):(i%2===0?"grit":"smile");
+      x.save();x.translate(v.x||0,v.y||0);x.scale(v.s||1,v.s||1);
+      if(v.bg)v.bg(x,t);if(!v.noGround&&!opt.noGround)ground(x);
+      fig(x,p,{mouth});if(v.fg)v.fg(x,p,t,{i,ph,n});
+      x.restore();
+      if(v.label)lbl(x,v.label,v.lx||110);
+    });
     txt(x,dose,DW-8,18,{mono:1,size:11,col:C.rust,align:"right",w:700});
   }};
 }
+function D(id,name,dose,cue,poses,opt={}){DV(id,name,dose,cue,[{poses,bg:opt.bg,fg:opt.fg,noGround:opt.noGround}],opt)}
 const dbs=(x,p)=>{PR.db(x,p.hB);PR.db(x,p.hA)};
 
 // ===== LEGS =====
@@ -936,6 +946,133 @@ DEMOS.shcar={name:"Shoulder CARs",cue:"One arm, slow and controlled. Reach forwa
  D("vsit","V-Sit-ups","× 10","Lie flat, arms overhead. Lift arms and legs together to meet in a V, lower with control.",[A,B],{bg:x=>PR.mat(x,40,182)});}
 {const A=mk({N:[132,136],P:[100,146],e:[150,130],h:[168,124],k:[76,140],f:[52,132]});
  D("hollow","Hollow Body Hold","1 min","Lower back pressed into the floor, arms and legs long and just off the ground. Breathe.",[A,add(A,0,2)],{hold:1,reps:4,mouth:"grit",bg:x=>PR.mat(x,40,182)});}
+
+// ===================== FRONT, OVERHEAD and TWO-ANGLE demos =====================
+// front/overhead poses carry shoulder (sA,sB) and hip (qA,qB) points so both arms and legs read clearly
+function mkF(o){
+  const N=o.N,P=o.P,p={N,P,eA:o.eA,hA:o.hA,eB:o.eB,hB:o.hB,kA:o.kA,fA:o.fA,kB:o.kB,fB:o.fB};
+  const sw=o.sw||11,hw=o.hw||7,sy=o.sy===undefined?3:o.sy;
+  p.sA=[N[0]-sw,N[1]+sy];p.sB=[N[0]+sw,N[1]+sy];p.qA=[P[0]-hw,P[1]];p.qB=[P[0]+hw,P[1]];
+  p.H=o.H||[N[0],N[1]-12];
+  return p;
+}
+const FL={kA:[92,121],fA:[90,150],kB:[108,121],fB:[110,150]};          // standing legs, front view
+const SEATF={P:[100,110],kA:[90,118],fA:[88,148],kB:[110,118],fB:[112,148]}; // seated, front view
+const LYT={N:[100,44],P:[100,98],H:[100,30],kA:[84,120],fA:[72,142],kB:[116,120],fB:[128,142],sy:4,sw:12};  // lying, seen from above
+const dbs2=(x,p,a=0,s=1)=>{PR.db(x,p.hA,a,s);PR.db(x,p.hB,a,s)};
+const benchTop=x=>{x.fillStyle=C.line;x.strokeStyle=C.muted;x.lineWidth=1.5;x.beginPath();x.roundRect?x.roundRect(84,14,32,100,5):x.rect(84,14,32,100);x.fill();x.stroke()};
+const lbl=(x,s,px)=>txt(x,s,px,32,{size:11,col:C.muted,w:600});
+// two views side by side, synced: [{poses,fg,bg,noGround,label}] at half size
+function DV2(id,name,dose,cue,a,b,opt={}){
+  const L=[{...a,x:-12,y:52,s:.72,lx:54},{...b,x:78,y:52,s:.72,lx:150}];
+  DV(id,name,dose,cue,L,opt);
+}
+
+// ---- shoulders, front view ----
+{const A=mkF({N:[100,50],P:[100,92],...FL,eA:[94,72],hA:[92,55],eB:[106,72],hB:[108,55]}),
+  B=mkF({N:[100,50],P:[100,92],...FL,eA:[74,62],hA:[74,42],eB:[126,62],hB:[126,42]}),
+  C2=mkF({N:[100,50],P:[100,92],...FL,eA:[86,30],hA:[90,10],eB:[114,30],hB:[110,10]});
+ D("arnold","Arnold Press","3 × 10","Dumbbells at shoulder height, palms facing you, elbows in front. Press up while turning the palms forward, finish overhead, then turn them back on the way down.",[A,B,C2,B],
+  {reps:2,dur:8000,fg:(x,p)=>dbs2(x,p)});}
+{const arm={eA:[80,74],hA:[92,92]};
+ const A=mkF({N:[100,50],P:[100,92],...FL,...arm,eB:[126,64],hB:[124,44]}),B=mkF({N:[100,50],P:[100,92],...FL,...arm,eB:[116,32],hB:[113,12]});
+ D("onepress","1 Arm Press Up","3 × 10 each arm","One dumbbell, other hand on your hip. Brace the core and press straight up without leaning.",[A,B],{fg:(x,p)=>PR.db(x,p.hB)});}
+{const S={N:[100,50],P:[100,92],...FL};
+ const A=mkF({...S,eA:[88,72],hA:[90,92],eB:[112,72],hB:[110,92]}),B=mkF({...S,eA:[74,56],hA:[82,74],eB:[126,56],hB:[118,74]}),
+  C2=mkF({...S,eA:[74,56],hA:[74,36],eB:[126,56],hB:[126,36]}),Dp=mkF({...S,eA:[84,30],hA:[90,10],eB:[116,30],hB:[110,10]});
+ D("cuban","Cuban Press","3 × 10","Light weight. Upright row until the elbows are at shoulder height, rotate the forearms up, then press overhead. Reverse it down.",[A,B,C2,Dp,C2,B],{reps:1,dur:8000,fg:(x,p)=>dbs2(x,p)});}
+{const A=mkF({N:[100,50],P:[100,92],...FL,eA:[86,72],hA:[84,92],eB:[114,72],hB:[116,92]}),
+  B=mkF({N:[100,43],P:[100,92],...FL,eA:[86,65],hA:[84,85],eB:[114,65],hB:[116,85]});
+ D("shrug","Shrugs (Heavy)","3 × 12","Heavy dumbbells at your sides. Shoulders straight up to the ears, hold a second, lower slowly.",[A,B],
+  {fg:(x,p)=>{dbs2(x,p,Math.PI/2);if(p.N[1]<46){txt(x,"^",80,46,{col:C.rust,size:14});txt(x,"^",120,46,{col:C.rust,size:14})}}});}
+{const S={N:[100,50],P:[100,92],...FL};
+ const A=mkF({...S,eA:[87,74],hA:[97,77],eB:[113,74],hB:[103,77]}),B=mkF({...S,eA:[87,74],hA:[64,74],eB:[113,74],hB:[136,74]});
+ D("extrot","External Rotation","3 × 12","Elbows tucked at your sides, bent to 90 degrees. Rotate the hands out away from your belly, slow back in.",[A,B],
+  {fg:(x,p)=>PR.band(x,p.hA,p.hB)});}
+{const S={N:[100,68],...SEATF};
+ const A=mkF({...S,eA:[76,80],hA:[78,60],eB:[124,80],hB:[122,60]}),B=mkF({...S,eA:[84,46],hA:[88,26],eB:[116,46],hB:[112,26]});
+ D("machpress","Machine Shoulder Press","Heavy × 7","Sit tall, handles at shoulder height. Press up without arching your back, control it down.",[A,B],
+  {bg:x=>PR.box(x,84,40,116,112),fg:(x,p)=>{PR.bar(x,p.hA,5);PR.bar(x,p.hB,5)}});}
+{const L2={kA:[90,121],fA:[86,150],kB:[110,121],fB:[114,150]};
+ const A=mkF({N:[100,50],P:[100,92],...L2,eA:[86,72],hA:[84,92],eB:[114,72],hB:[116,92]});
+ const B=mkF({N:[112,54],P:[100,92],H:[116,43],...L2,eA:[98,70],hA:[93,88],eB:[122,76],hB:[124,99]});
+ const C2=mkF({N:[88,54],P:[100,92],H:[84,43],...L2,eA:[78,76],hA:[76,99],eB:[102,70],hB:[107,88]});
+ D("sidebend","DB Side Bend","3 × 12 each side","Dumbbell in one hand, other hand on your hip. Bend sideways down, then pull back up with the obliques. Hips stay still.",[A,B,A,C2],
+  {reps:2,fg:(x,p)=>PR.db(x,p.hB,Math.PI/2)});}
+
+// ---- chest: side + from above ----
+{const L1={N:[134,112],P:[88,114],H:[148,106],k:[66,118],f:[60,150]};
+ const sideA=mk({...L1,e:[122,122],h:[124,100]}),sideB=mk({...L1,e:[126,96],h:[128,76]});
+ const bar=(x,p,k)=>{x.strokeStyle=C.ink;x.lineCap="round";x.lineWidth=3*k;x.beginPath();x.moveTo(p.hA[0]-16,p.hA[1]);x.lineTo(p.hB[0]+16,p.hB[1]);x.stroke();
+   x.fillStyle=C.ink;[p.hA[0]-16,p.hB[0]+16].forEach(cx=>x.fillRect(cx-2*k,p.hA[1]-8*k,4*k,16*k))};
+ const kOf=p=>1+Math.max(0,(64-p.eA[1])/12)*.5;
+ // machine bench shown as a bench press: side + overhead
+ const tA=mkF({...LYT,eA:[72,64],hA:[74,50],eB:[128,64],hB:[126,50]}),tB=mkF({...LYT,eA:[80,51],hA:[80,47],eB:[120,51],hB:[120,47]});
+ DV2("machbench","Heavy Machine Bench","Heavy × 7","Shoulder blades squeezed back, bar or handles to mid-chest with elbows about 45 to 75 degrees from your body, then press up.",
+  {poses:[sideA,sideB],label:"SIDE",bg:x=>PR.bench(x,70,152,118),fg:(x,p)=>PR.bar(x,p.hB,4)},
+  {poses:[tA,tB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>bar(x,p,kOf(p))});
+ const dA=mkF({...LYT,eA:[76,62],hA:[80,48],eB:[124,62],hB:[120,48]}),dB=mkF({...LYT,eA:[86,48],hA:[88,46],eB:[114,48],hB:[112,46]});
+ DV2("dbpress","Neutral Grip DB Press","3 × 10","Palms facing each other, elbows tucked in at about 45 degrees. Press up and slightly together over the chest.",
+  {poses:[sideA,sideB],label:"SIDE",bg:x=>PR.bench(x,70,152,118),fg:dbs},
+  {poses:[dA,dB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,Math.PI/2,kOf(p))});
+ const F1=mk({...L1,e:[118,116],h:[112,124]}),F2=mk({...L1,e:[126,98],h:[128,80]});
+ const fA=mkF({...LYT,eA:[68,52],hA:[50,56],eB:[132,52],hB:[150,56]}),fB=mkF({...LYT,eA:[90,47],hA:[97,46],eB:[110,47],hB:[103,46]});
+ DV2("dbfly","DB Fly + Hex","3 × 10","Arms wide with soft elbows, hug a big tree up to the top, then squeeze the dumbbells together.",
+  {poses:[F1,F2],label:"SIDE",bg:x=>PR.bench(x,70,152,118),fg:dbs},
+  {poses:[fA,fB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,Math.PI/2,1+Math.max(0,(56-p.hB[1])/10)*.5)});
+ const I={N:[120,84],P:[86,118],k:[110,122],f:[112,150]};
+ const iA=mk({...I,e:[118,110],h:[132,98]}),iB=mk({...I,e:[136,88],h:[154,76]});
+ const inc=x=>{PR.box(x,70,122,100,128);PR.slope(x,[82,122],[130,76])};
+ DV2("inclpress","Incline DB Press","3 × 10","Bench at about 30 degrees. Lower to the upper chest, elbows about 45 degrees, press up over the shoulders.",
+  {poses:[iA,iB],label:"SIDE",bg:inc,fg:dbs},{poses:[dA,dB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,0,kOf(p))});
+ const cA=mk({...I,e:[114,104],h:[114,118]}),cB=mk({...I,e:[136,88],h:[152,78]});
+ DV2("inclfly","Incline DB Fly","3 × 10","Same incline. Open wide with soft elbows, feel the stretch across the chest, then hug back up.",
+  {poses:[cA,cB],label:"SIDE",bg:inc,fg:dbs},{poses:[fA,fB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,Math.PI/2,1+Math.max(0,(56-p.hB[1])/10)*.5)});
+ const Fl={N:[134,142],P:[92,144],H:[148,136],k:[70,124],f:[56,150]};
+ const flA=mk({...Fl,e:[122,148],h:[126,128]}),flB=mk({...Fl,e:[128,120],h:[130,100]});
+ const ftA=mkF({...LYT,eA:[70,60],hA:[78,48],eB:[130,60],hB:[122,48]}),ftB=mkF({...LYT,eA:[86,48],hA:[88,46],eB:[114,48],hB:[112,46]});
+ DV2("floorpress","DB Floor Press","3 × 10","On the floor, knees bent. Upper arms touch the floor softly, then press straight up.",
+  {poses:[flA,flB],label:"SIDE",bg:x=>PR.mat(x,50,170),fg:dbs},
+  {poses:[ftA,ftB],label:"FROM ABOVE",noGround:1,bg:x=>{x.fillStyle=C.line;x.fillRect(50,20,100,130)},fg:(x,p)=>dbs2(x,p,0,kOf(p))});}
+
+// ---- legs and core: side + front together ----
+{const sA=mk({N:[100,54],P:[98,96],e:[102,74],h:[103,94],k:[118,122],f:[122,150],kA:[78,118],fA:[56,124]}),
+  sB=mk({N:[98,76],P:[94,118],e:[100,96],h:[101,116],k:[126,124],f:[122,150],kA:[80,144],fA:[56,124]});
+ const fA=mkF({N:[100,54],P:[100,96],kA:[93,118],fA:[93,128],kB:[110,122],fB:[112,150],eA:[87,74],hA:[86,94],eB:[113,74],hB:[114,94]}),
+  fB=mkF({N:[100,76],P:[100,118],kA:[94,140],fA:[93,130],kB:[114,128],fB:[112,150],eA:[87,96],hA:[86,116],eB:[113,96],hB:[114,116]});
+ DV2("bulgarian","Bulgarian Split Squat","3 × 10 each leg","Back foot on the bench. Drop the back knee straight down, front knee tracks over your toes, drive up through the front heel.",
+  {poses:[sA,sB],label:"SIDE",bg:x=>PR.bench(x,30,64,124),fg:dbs},
+  {poses:[fA,fB],label:"FRONT",bg:x=>{x.fillStyle=C.line;x.fillRect(80,124,26,6)},fg:(x,p)=>dbs2(x,p,Math.PI/2)});}
+{const sA=mk({N:[104,94],P:[92,136],e:[116,112],h:[122,100],k:[118,116],f:[106,150]});
+ const fA=mkF({N:[100,96],P:[100,134],kA:[80,126],fA:[86,150],kB:[120,126],fB:[114,150],eA:[88,114],hA:[98,106],eB:[112,114],hB:[102,106],hw:9});
+ DV2("deepsquat","Deep Squat Hold","30s","Sink as low as you can, heels down, knees pushed out over the toes, elbows inside the knees, chest up.",
+  {poses:[sA,add(sA,0,2)],label:"SIDE"},{poses:[fA,add(fA,0,2)],label:"FRONT"},{hold:1,reps:3});}
+{const S={N:[96,72],P:[100,114],k:[126,112],f:[128,146]};
+ const sA=mk({...S,e:[104,42],h:[106,22]}),sB=mk({...S,e:[88,90],h:[104,74]});
+ const F0={N:[100,70],...SEATF};
+ const fA=mkF({...F0,eA:[80,40],hA:[72,20],eB:[120,40],hB:[128,20]}),fB=mkF({...F0,eA:[74,80],hA:[78,60],eB:[126,80],hB:[122,60]});
+ DV2("pulldown","Front Pull-downs","Heavy × 7","Wide grip, lean back slightly, pull the bar to the top of the chest with elbows driving down and back. Wide, mid, then close grip.",
+  {poses:[sA,sB],label:"SIDE",bg:x=>{PR.box(x,84,114,118,120);PR.frame(x,150,6,104)},fg:(x,p)=>{PR.cable(x,p.hB,[106,6]);PR.bar(x,p.hB,16);PR.pad(x,[126,106])}},
+  {poses:[fA,fB],label:"FRONT",fg:(x,p)=>{const m=[(p.hA[0]+p.hB[0])/2,p.hA[1]];PR.cable(x,m,[100,2]);x.strokeStyle=C.ink;x.lineWidth=3;x.beginPath();x.moveTo(p.hA[0]-8,p.hA[1]);x.lineTo(p.hB[0]+8,p.hB[1]);x.stroke()}});}
+{const S={N:[118,104],P:[100,140],k:[80,116],f:[60,128]};
+ const sA=mk({...S,e:[124,122],h:[134,122]}),sB=mk({...S,e:[110,124],h:[102,128]});
+ const F0={N:[100,104],P:[100,140],kA:[90,120],fA:[84,132],kB:[110,120],fB:[116,132]};
+ const fA=mkF({...F0,eA:[86,118],hA:[78,126],eB:[96,120],hB:[84,126]}),fB=mkF({...F0,eA:[104,120],hA:[116,126],eB:[114,118],hB:[122,126]});
+ DV2("russian","Russian Twists","× 20","Sit back, feet up, weight in both hands. Twist side to side, follow the weight with your eyes.",
+  {poses:[sA,sB],label:"SIDE",fg:(x,p)=>PR.plate(x,p.hB)},{poses:[fA,fB],label:"FRONT",fg:(x,p)=>PR.plate(x,[(p.hA[0]+p.hB[0])/2,p.hA[1]])},{reps:5});}
+
+// ---- mobility: proper front views ----
+{const A=mkF({N:[100,50],P:[100,92],...FL,eA:[78,58],hA:[76,40],eB:[122,58],hB:[124,40]}),B=mkF({N:[100,50],P:[100,92],...FL,eA:[84,32],hA:[76,12],eB:[116,32],hB:[124,12]});
+ D("wallslide","Wall Slides","× 12","Back, head and arms against the wall. Slide the arms up into a Y, then pull back down into a W.",[A,B],{bg:x=>PR.box(x,56,8,144,G)});
+ const P1=mkF({N:[100,50],P:[100,92],...FL,eA:[95,64],hA:[97,62],eB:[105,64],hB:[103,62]}),P2=mkF({N:[100,50],P:[100,92],...FL,eA:[78,54],hA:[58,54],eB:[122,54],hB:[142,54]});
+ D("pullapart","Band Pull-aparts","× 15","Arms straight out in front, band in both hands. Pull it apart to your chest, squeeze the shoulder blades.",[P1,P2],{fg:(x,p)=>PR.band(x,p.hA,p.hB)});
+ const C1=mkF({N:[116,86],P:[118,128],eB:[126,104],hB:[118,112],eA:[106,104],hA:[114,112],kB:[138,124],fB:[140,150],kA:[90,140],fA:[60,150]}),
+  C3=mkF({N:[84,86],P:[82,128],eB:[94,104],hB:[86,112],eA:[74,104],hA:[82,112],kB:[110,140],fB:[140,150],kA:[62,124],fA:[60,150]});
+ D("cossack","Cossack Squats","× 8 each side","Wide stance. Sit down into one hip with the other leg straight and toes up. Shift across to the other side.",[C1,C3],{reps:2,dur:7000});
+ const N0={N:[100,98],P:[100,140],eA:[88,124],hA:[82,146],eB:[112,124],hB:[118,146]};
+ const T1=mkF({...N0,kB:[126,128],fB:[142,148],kA:[120,138],fA:[104,148]}),T2=mkF({...N0,kB:[80,138],fB:[96,148],kA:[74,128],fA:[58,148]});
+ D("9090","90/90 Hip Switches","× 10 each side","Sit with both knees bent to 90 degrees. Rotate both knees over to the other side, hands off the floor if you can.",[T1,T2],{reps:3,bg:x=>PR.mat(x,50,170)});}
+
 
 let demoId=null,demoRAF=0,demoStart=0;
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
