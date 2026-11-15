@@ -1210,12 +1210,12 @@ function DV2(id,name,dose,cue,a,b,opt={}){
  DV2("dbfly","DB Fly + Hex","3 × 10","Arms wide with soft elbows, hug a big tree up to the top, then squeeze the dumbbells together.",
   {poses:[F1,F2],label:"SIDE",bg:x=>PR.bench(x,70,152,118),fg:dbs},
   {poses:[fA,fB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,Math.PI/2,1+Math.max(0,(56-p.hB[1])/10)*.5)});
- const I={N:[120,84],P:[86,118],k:[110,122],f:[112,150]};
- const iA=mk({...I,e:[104,104],h:[114,92]}),iB=mk({...I,e:[134,63],h:[146,42]});
- const inc=x=>{PR.box(x,70,122,100,128);PR.slope(x,[82,122],[130,76])};
+ const I={N:[68,88],P:[110,118],k:[140,116],f:[144,150]};
+ const iA=mk({...I,e:[70,110],h:[84,94]}),iB=mk({...I,e:[74,64],h:[78,40]});
+ const inc=x=>{PR.box(x,96,124,132,130);PR.slope(x,[118,124],[56,78])};
  DV2("inclpress","Incline DB Press","3 × 10","Bench at about 30 degrees. Lower to the upper chest, elbows about 45 degrees, press up over the shoulders.",
   {poses:[iA,iB],label:"SIDE",bg:inc,fg:dbs},{poses:[dA,dB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,0,kOf(p))});
- const cA=mk({...I,e:[106,102],h:[100,112]}),cB=mk({...I,e:[134,63],h:[144,44]});
+ const cA=mk({...I,e:[78,104],h:[90,106]}),cB=mk({...I,e:[74,64],h:[78,42]});
  DV2("inclfly","Incline DB Fly","3 × 10","Same incline. Open wide with soft elbows, feel the stretch across the chest, then hug back up.",
   {poses:[cA,cB],label:"SIDE",bg:inc,fg:dbs},{poses:[fA,fB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,Math.PI/2,1+Math.max(0,(56-p.hB[1])/10)*.5)});
  const Fl={N:[134,142],P:[92,144],H:[148,136],k:[70,124],f:[56,150]};
