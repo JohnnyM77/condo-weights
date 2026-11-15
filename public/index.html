@@ -158,6 +158,14 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
 .go:disabled{opacity:.4}
 
 .fin{border-top:5px solid var(--done)}
+.startwu{width:100%;padding:13px;font-size:1rem}
+.chip.pickme.on::before{content:"✓ "}
+.guide{display:flex;flex-direction:column;gap:8px}
+.gtop{display:flex;align-items:center;gap:12px}
+.gtop .clock{font-size:2.4rem}
+.gtop .phase{font-size:.95rem;color:var(--fg);font-weight:600}
+.gbar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.gbar span{display:block;height:100%;width:0;background:var(--done);transition:width .2s linear}
 .donecard .finish{width:100%;padding:16px;font-size:1.15rem}
 .donecard.isfinished .finish{background:var(--done)}
 .sumlist{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
@@ -227,9 +235,7 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
   <div class="card extra" id="warmcard">
     <h3>Warm up <span class="sub" style="text-transform:none;letter-spacing:0;font-family:var(--body)">6 to 8 min</span></h3>
     <p>Moving stretches to get warm. Keep each one smooth and easy.</p>
-    <div class="chips" id="wu"></div>
-    <div id="mobH" class="mobsec"></div>
-    <div id="mobS" class="mobsec"></div>
+    <div id="wubody"></div>
   </div>
 
   <div id="groups" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -286,6 +292,11 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
     <div class="top"><h3 id="dtitle">Demo</h3><button id="dclose">Close</button></div>
     <canvas id="dcv" role="img" aria-label="Animated exercise demo"></canvas>
     <p id="dcue"></p>
+    <div id="guide" class="guide" hidden>
+      <div class="gtop"><div class="clock" id="gclock">0:45</div><div class="phase" id="gnext"></div></div>
+      <div class="gbar"><span id="gprog"></span></div>
+      <div class="sumbtns"><button id="gpause">Pause</button><button id="gskip">Skip</button><button id="gstop">Stop</button></div>
+    </div>
   </div>
 </div>
 
@@ -319,7 +330,7 @@ const GROUPS=[
  {id:"shoulders",name:"Shoulders",size:"Small",pc:"--p-shoulders",ex:[
   ["Full Raise, Slow Lower","Side Lat Raises (Side Grip)",[10,8,5]],
   ["Arnold Raises","Side Plank Lat Raise",[23,18,18]],
-  ["Machine Shoulder Press","Scaption & Shrug",[63,57,52],1],
+  ["Face Pulls (rope)","Band Face Pulls",null,0,"facepull","facepull"],
   ["External Rotation","F45 Push-ups Feet Raised",[10,10,10]],
   ["1 Arm Press Up","Alternating Shoulder Press",[23,18,18]]]},
  {id:"core",name:"Core",size:"Small",pc:"--p-core",ex:[
@@ -327,10 +338,13 @@ const GROUPS=[
   ["Decline Crunch + Twist ×12","Lying Reverse Crunch",null],
   ["DB Side Bend","Overhead DB Side Bend",[28,28,23]],
   ["Russian Twists 15kg","Lying Toe Taps ×50",[12,12,12]],
-  ["Back Hyperextension","Hanging Leg Raises ×12",null]]}
+  ["Back Hyperextension","Hanging Leg Raises ×12",null]]},
+ {id:"extra",name:"Extras",size:"Optional",pc:"--p-shoulders",extra:true,ex:[
+  ["Machine Shoulder Press","Scaption & Shrug",[63,57,52],1,"machpress","shoulders2"]]}
 ];
 const EXDEMO={legs0:"calf",legs1:"legext",legs2:"hamcurl",legs3:"bulgarian",legs4:"hipraise",chest0:"machbench",chest1:"dbpress",chest2:"dbfly",chest3:"inclpress",chest4:"inclfly",back0:"pulldown",back1:"row",back2:"csrow",back3:"shrug",back4:"cuban",arms0:"tripush",arms1:"dips",arms2:"floorpress",arms3:"punch",shoulders0:"fullraise",shoulders1:"arnold",shoulders2:"machpress",shoulders3:"extrot",shoulders4:"onepress",core0:"swing",core1:"crunch",core2:"sidebend",core3:"russian",core4:"hyper"};
-GROUPS.forEach(g=>g.ex=g.ex.map((e,i)=>({id:g.id+i,g:g.id,name:e[0],alt:e[1],base:e[2],heavy:!!e[3],demo:e[4]||EXDEMO[g.id+i]||null})));
+GROUPS.forEach(g=>g.ex=g.ex.map((e,i)=>{const id=e[5]||g.id+i;return {id,g:g.id,name:e[0],alt:e[1],base:e[2],heavy:!!e[3],demo:e[4]||EXDEMO[id]||null,cable:/cable|face pull/i.test(e[0])}}));
+const MAIN=GROUPS.filter(g=>!g.extra),EXTRA=GROUPS.find(g=>g.extra);
 const ALLEX=GROUPS.flatMap(g=>g.ex);
 const BIG=["legs","chest","back"],SMALL=["arms","shoulders","core"];
 const WU=[["Cat-Cow","×10","catcow"],["Leg Swings","×10 each way","legswing"],["Hip Circles","×10 each way","hipcircle"],["Arm Circles","×10 each way","armcircle"],["Thoracic Rotations","×8 each side","throt"],["Inchworms","×5","inchworm"],["World's Greatest Stretch","×3 each side","wgs"],["Deep Squat Hold","30s","deepsquat"]];
@@ -347,13 +361,13 @@ const REST=120;
 const days={};
 let cur=ymd(new Date());
 let db=null,col=null,mode="local",who="";
-const open=new Set(GROUPS.map(g=>g.id));
-try{JSON.parse(localStorage.getItem("cw-closed")||"[]").forEach(x=>open.delete(x))}catch(e){}
+const open=new Set(MAIN.map(g=>g.id));
+try{JSON.parse(localStorage.getItem("cw-closed")||"[]").forEach(x=>open.delete(x));if(localStorage.getItem("cw-open-extra"))open.add("extra")}catch(e){}
 
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function parse(s){const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)}
 function norm(o){return {done:o.done||{},sets:o.sets||{},kg:o.kg||{},used:o.used||{},tech:o.tech||{},pick:o.pick||[],
-  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},swap:o.swap||{},finished:o.finished||"",fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{}}}
+  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},wsel:o.wsel,swap:o.swap||{},finished:o.finished||"",fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{}}}
 function day(k){return days[k]||(days[k]=norm({}))}
 const has=v=>v!==""&&v!=null;
 function lastKg(exId,beforeKey){
@@ -368,9 +382,10 @@ function mobDay(d){return Object.keys(d.mob||{}).length||Object.keys(d.mobH||{})
 function fullIndex(){return Object.keys(days).filter(k=>k<cur&&days[k].pick&&days[k].pick.includes("full")).length%5}
 function plan(){
   const pick=day(cur).pick;
-  if(!pick.length)return {mode:"all",groups:GROUPS.map(g=>({g,ex:g.ex}))};
-  if(pick.includes("full")){const i=fullIndex(),sw=day(cur).swap;return {mode:"full",groups:GROUPS.map(g=>({g,ex:[g.ex[sw[g.id]!==undefined?sw[g.id]:i]]}))}}
-  return {mode:"pick",groups:GROUPS.filter(g=>pick.includes(g.id)).map(g=>({g,ex:g.ex}))};
+  const X={g:EXTRA,ex:EXTRA.ex};
+  if(!pick.length)return {mode:"all",groups:[...MAIN.map(g=>({g,ex:g.ex})),X]};
+  if(pick.includes("full")){const i=fullIndex(),sw=day(cur).swap;return {mode:"full",groups:[...MAIN.map(g=>({g,ex:[g.ex[sw[g.id]!==undefined?sw[g.id]:i]]})),X]}}
+  return {mode:"pick",groups:[...MAIN.filter(g=>pick.includes(g.id)).map(g=>({g,ex:g.ex})),X]};
 }
 function daysSince(g){
   const last=Object.keys(days).filter(k=>k<cur&&groupHit(k,g)).sort().pop();
@@ -415,7 +430,7 @@ function renderDate(){
 function renderPick(){
   const pick=day(cur).pick;
   const gchip=g=>`<button class="pchip ${pick.includes(g.id)?"on":""}" data-pick="${g.id}" style="--pc:var(${g.pc})" aria-pressed="${pick.includes(g.id)}"><span class="plate"></span>${g.name}<small>${g.size}</small></button>`;
-  $("pickrow").innerHTML=GROUPS.map(gchip).join("")+`<button class="pchip ${pick.includes("full")?"on":""}" data-pick="full" aria-pressed="${pick.includes("full")}">Full body<small>1 of each</small></button>`;
+  $("pickrow").innerHTML=MAIN.map(gchip).join("")+`<button class="pchip ${pick.includes("full")?"on":""}" data-pick="full" aria-pressed="${pick.includes("full")}">Full body<small>1 of each</small></button>`;
   const s=suggestion(),nm=id=>GROUPS.find(g=>g.id===id).name,ago=n=>n===999?"not yet done":n===1?"1 day ago":n+" days ago";
   const same=pick.length===2&&s.ids.every(i=>pick.includes(i));
   $("suggest").innerHTML=same?`<span>On track: <b>${nm(s.ids[0])} + ${nm(s.ids[1])}</b> were the most overdue.</span>`
@@ -427,7 +442,7 @@ function renderPick(){
 function weekKeys(){const d=parse(cur);const dow=(d.getDay()+6)%7;d.setDate(d.getDate()-dow);return Array.from({length:7},(_,i)=>{const x=new Date(d);x.setDate(d.getDate()+i);return ymd(x)})}
 function renderWeek(){
   const wk=weekKeys();
-  $("week").innerHTML=GROUPS.map(g=>{
+  $("week").innerHTML=MAIN.map(g=>{
     const n=wk.filter(k=>groupHit(k,g)).length;
     const last=Object.keys(days).filter(k=>k<=cur&&groupHit(k,g)).sort().pop();
     const ago=last?Math.round((parse(cur)-parse(last))/864e5):null;
@@ -448,17 +463,67 @@ function chipList(list,key,store){
     const chip=`<button class="chip ${on?"on":""}" data-chip="${store||key}" data-id="${esc(id)}">${esc(w[0])}${w[1]?" <small>"+esc(w[1])+"</small>":""}</button>`;
     return w[2]?`<span class="chipwrap">${chip}<button class="play" data-demo="${w[2]}" aria-label="Watch ${esc(w[0])} demo">▶</button></span>`:chip}).join("");
 }
+const ALLWU=[...WU.map(w=>({w,store:"wu",sec:"Warm up"})),...MOBH.map(w=>({w,store:"mob",sec:"Hips"})),...MOBS.map(w=>({w,store:"mob",sec:"Shoulders"}))];
+function secsFor(dose){
+  let m;dose=dose||"";
+  if(/\+30s/.test(dose))return 150;
+  if((m=dose.match(/(\d+)s each side/)))return 2*+m[1];
+  if((m=dose.match(/(\d+) to (\d+)s/)))return +m[2];
+  if((m=dose.match(/^(\d+)s$/)))return +m[1];
+  if((m=dose.match(/×(\d+)/))){const per=/each (way|side)/.test(dose)?2:1;return Math.min(90,Math.max(40,Math.round(+m[1]*per*3)))}
+  return 45;
+}
+let choosing=false;
+function wsel(){const d=day(cur);if(Array.isArray(d.wsel))return d.wsel;const k=Object.keys(days).filter(k=>k<cur&&Array.isArray(days[k].wsel)&&days[k].wsel.length).sort().pop();return k?days[k].wsel:[]}
+function hipScore(){const d=day(cur),last=Object.keys(days).filter(k=>k<cur&&days[k].hip).sort().pop();
+  return `<div class="score" style="margin-top:8px"><span>Left hip in pigeon today:</span>${[1,2,3,4,5].map(n=>`<button data-hip="${n}" class="${d.hip===n?"on":""}" aria-pressed="${d.hip===n}">${n}</button>`).join("")}<span>${last?"Last: "+days[last].hip:"1 stuck, 5 like the right"}</span></div>`}
 function renderWarm(){
-  const d=day(cur),pick=d.pick,p=plan();
-  $("wu").innerHTML=chipList(WU,"wu");
+  const d=day(cur),sel=wsel(),el=$("wubody");
+  if(choosing){
+    const grp=sec=>`<h4>${sec}</h4><div class="chips">${ALLWU.filter(x=>x.sec===sec).map(x=>`<button class="chip pickme ${sel.includes(x.w[0])?"on":""}" data-wsel="${esc(x.w[0])}">${esc(x.w[0])} <small>${esc(x.w[1])}</small></button>`).join("")}</div>`;
+    el.innerHTML=`<p>Tap the ones you want today. Everything else hides.</p>${grp("Warm up")}${grp("Hips")}${grp("Shoulders")}
+      <div class="sumbtns"><button class="go" id="wudone">Done (${sel.length} picked)</button>${sel.length?`<button id="wuclear">Clear</button>`:""}</div>`;
+    return}
+  if(sel.length){
+    const items=ALLWU.filter(x=>sel.includes(x.w[0])),total=items.reduce((a,x)=>a+secsFor(x.w[1]),0);
+    const chips=items.map(x=>{const on=!!d[x.store][x.w[0]];return `<span class="chipwrap"><button class="chip ${on?"on":""}" data-chip="${x.store}" data-id="${esc(x.w[0])}">${esc(x.w[0])} <small>${esc(x.w[1])}</small></button>${x.w[2]?`<button class="play" data-demo="${x.w[2]}" aria-label="Watch ${esc(x.w[0])} demo">▶</button>`:""}</span>`}).join("");
+    el.innerHTML=`<button class="go startwu" id="wustart">▶ Start guided warm-up · ${items.length} moves · about ${Math.round(total/60)} min</button>
+      <div class="chips">${chips}</div>${sel.includes("Pigeon Pose")?hipScore():""}<button class="linkbtn" id="wuchoose">Change my warm-up</button>`;
+    return}
+  const pick=d.pick,p=plan();
   const showH=p.mode!=="pick"||pick.some(x=>x==="legs"||x==="core");
   const showS=p.mode!=="pick"||pick.some(x=>["chest","back","arms","shoulders"].includes(x));
-  const last=Object.keys(days).filter(k=>k<cur&&days[k].hip).sort().pop();
-  $("mobH").hidden=!showH;$("mobS").hidden=!showS;
-  $("mobH").innerHTML=`<h4>Hips${p.mode==="pick"?" (legs day)":""}</h4><div class="chips">${chipList(MOBH,"mob")}</div>
-    <div class="score" style="margin-top:8px"><span>Left hip in pigeon today:</span>${[1,2,3,4,5].map(n=>`<button data-hip="${n}" class="${d.hip===n?"on":""}" aria-pressed="${d.hip===n}">${n}</button>`).join("")}<span>${last?"Last: "+days[last].hip:"1 stuck, 5 like the right"}</span></div>`;
-  $("mobS").innerHTML=`<h4>Shoulders${p.mode==="pick"?" (upper body day)":""}</h4><div class="chips">${chipList(MOBS,"mob")}</div>`;
+  el.innerHTML=`<button class="linkbtn" id="wuchoose">Choose my warm-up (pick a few, then follow along with Xander)</button>
+    <div class="chips">${chipList(WU,"wu")}</div>
+    ${showH?`<div class="mobsec"><h4>Hips${p.mode==="pick"?" (legs day)":""}</h4><div class="chips">${chipList(MOBH,"mob")}</div>${hipScore()}</div>`:""}
+    ${showS?`<div class="mobsec"><h4>Shoulders${p.mode==="pick"?" (upper body day)":""}</h4><div class="chips">${chipList(MOBS,"mob")}</div></div>`:""}`;
 }
+// ---- guided warm-up: Xander does each move on a timer, then moves on ----
+let guide=null;
+function startGuide(){
+  const sel=wsel(),items=ALLWU.filter(x=>sel.includes(x.w[0])&&x.w[2]);if(!items.length)return;
+  guide={items,idx:0,end:0,left:0,paused:false,beep:0,switched:false,t:null};keepAwake(true);gStep();
+}
+function gStep(){
+  const g=guide,it=g.items[g.idx],secs=secsFor(it.w[1]);
+  openDemo(it.w[2]);$("guide").hidden=false;
+  $("dtitle").textContent=`${g.idx+1}/${g.items.length} · ${it.w[0]}`;
+  g.total=secs;g.end=Date.now()+secs*1000;g.paused=false;g.beep=0;g.switched=false;$("gpause").textContent="Pause";
+  const nx=g.items[g.idx+1];$("gnext").textContent=nx?"Next: "+nx.w[0]:"Last one";
+  clearInterval(g.t);g.t=setInterval(gTick,200);gTick();
+}
+function gTick(){
+  const g=guide;if(!g||g.paused)return;const it=g.items[g.idx];
+  const left=Math.max(0,Math.ceil((g.end-Date.now())/1000));$("gclock").textContent=fmt(left);
+  $("gprog").style.width=(100*(1-left/g.total))+"%";
+  if(/each (side|way)/.test(it.w[1])&&!g.switched&&left<=Math.floor(g.total/2)&&left>3){g.switched=true;blip();blip();$("gnext").textContent="Switch sides";
+    setTimeout(()=>{if(guide&&guide.items[guide.idx]===it){const nx=guide.items[guide.idx+1];$("gnext").textContent=nx?"Next: "+nx.w[0]:"Last one"}},2500)}
+  if(left>0&&left<=3&&left!==g.beep){g.beep=left;blip()}
+  if(left>0)return;
+  softTone();const d=day(cur);d[it.store][it.w[0]]=true;save(cur);
+  g.idx++;if(g.idx<g.items.length)gStep();else{stopGuide();$("dtitle").textContent="Warm-up done";}
+}
+function stopGuide(){if(!guide)return;clearInterval(guide.t);guide=null;$("guide").hidden=true;closeDemo();keepAwake(false);renderWarm();renderWeek()}
 function renderFin(){
   const d=day(cur),z=d.z2;
   $("fincard").classList.toggle("isdone",!!z.done);
@@ -476,7 +541,7 @@ function renderGroups(){
     const n=ex.filter(e=>exDone(d,e)).length;
     return `<section class="card group ${open.has(g.id)?"":"closed"}" id="g-${g.id}" style="--pc:var(${g.pc})">
       <button class="ghead" data-toggle="${g.id}" aria-expanded="${open.has(g.id)}">
-        <h2>${g.name}</h2><span class="tag">${g.size}${g.sub?" · "+g.sub:""}</span>
+        <h2>${g.name}</h2><span class="tag">${g.extra?"Add one if you want":g.size}${g.sub?" · "+g.sub:""}</span>
         <span class="count ${n===ex.length?"full":""}">${n}/${ex.length}</span><span class="chev">▾</span></button>
       ${p.mode==="full"?`<div class="swaprow"><button class="swapbtn" data-swap="${g.id}">⇄ Swap for a different ${g.name.toLowerCase()} exercise</button></div>`:""}
       <ul class="exlist">${ex.map(e=>exHtml(e,d)).join("")}</ul>
@@ -489,7 +554,7 @@ function exHtml(e,d){
   if(today&&today.some(has))target=today.map(v=>`<span class="kg new">${esc(has(v)?v:"–")}</span>`).join("")+`<span class="bw">today</span>`;
   else if(prev)target=prev.kg.map(v=>`<span class="kg">${esc(has(v)?v:"–")}</span>`).join("")+`<span class="bw">last ${parse(prev.date).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</span>`;
   else if(e.base)target=e.base.map(v=>`<span class="kg">${v}</span>`).join("");
-  else target=`<span class="bw">Bodyweight / reps</span>`;
+  else target=`<span class="bw">${e.cable?"Cable or band: log your weight":"Bodyweight / reps"}</span>`;
   if(e.heavy)target+=`<span class="badge">Heavy ×7</span>`;
   if(d.tech[e.id])target+=`<span class="badge t4">4th: ${esc(d.tech[e.id])}</span>`;
   const ph=(prev?prev.kg:e.base)||["","",""],vals=today||["","",""];
@@ -635,6 +700,14 @@ document.addEventListener("click",ev=>{
   if(t.id==="unfinish"){d.finished="";save(cur);renderDone();return}
   if(t.id==="copysum"){const txt=["Condo Weights, "+parse(cur).toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"}),...summaryLines()].join("\n");
     const ok=()=>{t.textContent="Copied"},fail=()=>{t.textContent="Couldn't copy"};try{navigator.clipboard.writeText(txt).then(ok,fail)}catch(e){fail()}return}
+  if(t.id==="wuchoose"){choosing=true;if(!Array.isArray(d.wsel))d.wsel=wsel().slice();renderWarm();return}
+  if(t.dataset.wsel){const n=t.dataset.wsel;if(!Array.isArray(d.wsel))d.wsel=wsel().slice();d.wsel=d.wsel.includes(n)?d.wsel.filter(x=>x!==n):[...d.wsel,n];save(cur);renderWarm();return}
+  if(t.id==="wudone"){choosing=false;renderWarm();$("warmcard").scrollIntoView({block:"start",behavior:"smooth"});return}
+  if(t.id==="wuclear"){d.wsel=[];save(cur);renderWarm();return}
+  if(t.id==="wustart"){startGuide();return}
+  if(t.id==="gpause"&&guide){if(guide.paused){guide.end=Date.now()+guide.left*1000;guide.paused=false;t.textContent="Pause"}else{guide.left=Math.max(0,Math.ceil((guide.end-Date.now())/1000));guide.paused=true;t.textContent="Resume"}return}
+  if(t.id==="gskip"&&guide){guide.idx++;if(guide.idx<guide.items.length)gStep();else stopGuide();return}
+  if(t.id==="gstop"){stopGuide();return}
   if(t.dataset.usesug){d.pick=suggestion().ids;save(cur);renderAll();return}
   if(t.id==="showall"){d.pick=[];save(cur);renderAll();return}
   if(t.dataset.tech){const id=t.dataset.tech;d.tech[id]=d.tech[id]===t.dataset.v?undefined:t.dataset.v;if(!d.tech[id])delete d.tech[id];save(cur);rerenderEx(id);return}
@@ -644,13 +717,13 @@ document.addEventListener("click",ev=>{
   if(t.dataset.use){const id=t.dataset.use;if(t.dataset.v==="alt")d.used[id]="alt";else delete d.used[id];save(cur);rerenderEx(id);return}
   if(t.dataset.toggle){const g=t.dataset.toggle;open.has(g)?open.delete(g):open.add(g);
     $("g-"+g).classList.toggle("closed",!open.has(g));t.setAttribute("aria-expanded",open.has(g));
-    try{localStorage.setItem("cw-closed",JSON.stringify(GROUPS.map(x=>x.id).filter(x=>!open.has(x))))}catch(e){}return}
+    try{localStorage.setItem("cw-closed",JSON.stringify(GROUPS.map(x=>x.id).filter(x=>!open.has(x))));localStorage.setItem("cw-open-extra",open.has("extra")?"1":"")}catch(e){}return}
   if(t.dataset.jump){const el=$("g-"+t.dataset.jump);if(el){open.add(t.dataset.jump);el.classList.remove("closed");el.scrollIntoView({behavior:"smooth",block:"start"})}return}
   if(t.id==="prev"||t.id==="next"){const x=parse(cur);x.setDate(x.getDate()+(t.id==="prev"?-1:1));cur=ymd(x);renderAll();return}
   if(t.id==="tod"){cur=ymd(new Date());renderAll();return}
   if(t.id==="rplus"){restEnd+=30000;if(!restT){$("rest").classList.remove("ready");$("rskip").textContent="Skip";restT=setInterval(restTick,250)}restTick();return}
   if(t.id==="rskip"){stopRest();return}
-  if(t.id==="dclose"){closeDemo();return}
+  if(t.id==="dclose"){if(guide)stopGuide();else closeDemo();return}
 });
 $("sheet").addEventListener("click",e=>{if(e.target===$("sheet"))closeDemo()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet").hidden)closeDemo()});
@@ -1098,11 +1171,11 @@ function DV2(id,name,dose,cue,a,b,opt={}){
   {poses:[F1,F2],label:"SIDE",bg:x=>PR.bench(x,70,152,118),fg:dbs},
   {poses:[fA,fB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,Math.PI/2,1+Math.max(0,(56-p.hB[1])/10)*.5)});
  const I={N:[120,84],P:[86,118],k:[110,122],f:[112,150]};
- const iA=mk({...I,e:[118,110],h:[132,98]}),iB=mk({...I,e:[136,88],h:[154,76]});
+ const iA=mk({...I,e:[104,104],h:[114,92]}),iB=mk({...I,e:[134,63],h:[146,42]});
  const inc=x=>{PR.box(x,70,122,100,128);PR.slope(x,[82,122],[130,76])};
  DV2("inclpress","Incline DB Press","3 × 10","Bench at about 30 degrees. Lower to the upper chest, elbows about 45 degrees, press up over the shoulders.",
   {poses:[iA,iB],label:"SIDE",bg:inc,fg:dbs},{poses:[dA,dB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,0,kOf(p))});
- const cA=mk({...I,e:[114,104],h:[114,118]}),cB=mk({...I,e:[136,88],h:[152,78]});
+ const cA=mk({...I,e:[106,102],h:[100,112]}),cB=mk({...I,e:[134,63],h:[144,44]});
  DV2("inclfly","Incline DB Fly","3 × 10","Same incline. Open wide with soft elbows, feel the stretch across the chest, then hug back up.",
   {poses:[cA,cB],label:"SIDE",bg:inc,fg:dbs},{poses:[fA,fB],label:"FROM ABOVE",noGround:1,bg:benchTop,fg:(x,p)=>dbs2(x,p,Math.PI/2,1+Math.max(0,(56-p.hB[1])/10)*.5)});
  const Fl={N:[134,142],P:[92,144],H:[148,136],k:[70,124],f:[56,150]};
@@ -1150,6 +1223,18 @@ function DV2(id,name,dose,cue,a,b,opt={}){
  const T1=mkF({...N0,kB:[126,128],fB:[142,148],kA:[120,138],fA:[104,148]}),T2=mkF({...N0,kB:[80,138],fB:[96,148],kA:[74,128],fA:[58,148]});
  D("9090","90/90 Hip Switches","× 10 each side","Sit with both knees bent to 90 degrees. Rotate both knees over to the other side, hands off the floor if you can.",[T1,T2],{reps:3,bg:x=>PR.mat(x,50,170)});}
 
+
+// ---- full raise from the front, face pulls ----
+{const S={N:[100,50],P:[100,92],...FL};
+ const A=mkF({...S,eA:[87,72],hA:[85,92],eB:[113,72],hB:[115,92]}),B=mkF({...S,eA:[72,54],hA:[52,54],eB:[128,54],hB:[148,54]}),
+  C2=mkF({...S,eA:[80,30],hA:[88,10],eB:[120,30],hB:[112,10]});
+ D("fullraise","Full Raise, Slow Lower","3 × 10","Straight arms out to the sides, past shoulder height and all the way overhead, then take 4 seconds to lower.",[A,B,C2,B],{reps:2,dur:8000,fg:(x,p)=>dbs2(x,p)});}
+{const sA=mk({N:[100,50],P:[100,92],e:[124,50],h:[146,48],k:[102,120],f:[105,150]}),sB=mk({N:[100,50],P:[100,92],e:[90,42],h:[113,38],k:[102,120],f:[105,150]});
+ const S={N:[100,50],P:[100,92],...FL};
+ const fA=mkF({...S,eA:[94,60],hA:[97,48],eB:[106,60],hB:[103,48]}),fB=mkF({...S,eA:[72,44],hA:[80,26],eB:[128,44],hB:[120,26]});
+ DV2("facepull","Face Pulls","3 × 15","Rope at head height. Pull it to your face with elbows high and wide, hands finishing beside your ears, squeeze the upper back.",
+  {poses:[sA,sB],label:"SIDE",bg:x=>PR.frame(x,176,44,176),fg:(x,p)=>{PR.cable(x,p.hB,[176,46]);PR.band(x,[p.hB[0]-3,p.hB[1]-4],[p.hB[0]-3,p.hB[1]+4])}},
+  {poses:[fA,fB],label:"FRONT",fg:(x,p)=>PR.band(x,p.hA,p.hB)});}
 
 let demoId=null,demoRAF=0,demoStart=0;
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
