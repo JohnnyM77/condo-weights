@@ -119,6 +119,8 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
 .log label{display:flex;flex-direction:column;gap:3px;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .log input{font-family:var(--mono);font-size:1rem;width:100%;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
 .log .hint{font-size:.78rem;color:var(--muted)}
+.swaprow{padding:0 14px 10px}
+.swapbtn{background:transparent;border:1px dashed var(--line);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:.85rem;color:var(--fg);width:100%;text-align:left}
 .cx{padding:12px 14px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 
 .ws{border-top:5px solid var(--p-legs)}
@@ -131,6 +133,11 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
 .go:disabled{opacity:.4}
 
 .fin{border-top:5px solid var(--done)}
+.donecard .finish{width:100%;padding:16px;font-size:1.15rem}
+.donecard.isfinished .finish{background:var(--done)}
+.sumlist{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+.sumbtns{display:flex;gap:8px;flex-wrap:wrap}
+.sumbtns button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.85rem}
 .z2row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .z2row .tick{margin:0}
 .fin label{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
@@ -182,7 +189,7 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
 
   <div class="card extra ws" id="wscard">
     <h3>Wall sits: every day</h3>
-    <p>4 × 2 minute holds, 2 minutes rest between. Thighs as close to parallel as you can hold for the full 2 minutes. Breathe normally and don't hold your breath.</p>
+    <p>2 × 2 minute holds, 2 minutes rest between. Thighs as close to parallel as you can hold for the full 2 minutes. Breathe normally and don't hold your breath.</p>
     <div class="timer" id="wstimer">
       <div class="clock" id="wsclock" aria-live="polite">2:00</div>
       <div class="phase" id="wsphase">Ready for set 1</div>
@@ -220,6 +227,11 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
       <p>Walk the stairs, 10 reps of a different move at each level.</p>
       <div class="chips" id="fin"></div>
     </div>
+  </div>
+
+  <div class="card extra donecard" id="donecard">
+    <button class="go finish" id="finish">Finish workout</button>
+    <div id="summary" hidden></div>
   </div>
 
   <div class="notes">
@@ -302,7 +314,7 @@ const MOBS=[["Shoulder CARs","×5 each way","shcar"],["Wall Slides","×12","wall
 const CX=[["Plank alternates","3 min","plank"],["Side Plank with dips","×2 each side","sideplank"],["Supermans","×10","superman"],["Toe Taps","×50","toetap"],["V-Sit-ups","×10","vsit"],["Hollow Body Hold","1 min","hollow"]];
 const FIN=["Deep Squat","Sissy Squat","Side Squat","Front Squat","Back Squat","Wall Sits","Calf Raises"];
 const Z2WHERE=["Condo treadmill","Bukit Timah Hill"];
-const WS=[["Set 1","2 min"],["Set 2","2 min"],["Set 3","2 min"],["Set 4","2 min"]];
+const WS=[["Set 1","2 min"],["Set 2","2 min"]];
 const TECH=["21s","1.5s","Shock"];
 const REST=120;
 
@@ -316,7 +328,7 @@ try{JSON.parse(localStorage.getItem("cw-closed")||"[]").forEach(x=>open.delete(x
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function parse(s){const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)}
 function norm(o){return {done:o.done||{},sets:o.sets||{},kg:o.kg||{},used:o.used||{},tech:o.tech||{},pick:o.pick||[],
-  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{}}}
+  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},swap:o.swap||{},finished:o.finished||"",fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{}}}
 function day(k){return days[k]||(days[k]=norm({}))}
 const has=v=>v!==""&&v!=null;
 function lastKg(exId,beforeKey){
@@ -332,7 +344,7 @@ function fullIndex(){return Object.keys(days).filter(k=>k<cur&&days[k].pick&&day
 function plan(){
   const pick=day(cur).pick;
   if(!pick.length)return {mode:"all",groups:GROUPS.map(g=>({g,ex:g.ex}))};
-  if(pick.includes("full")){const i=fullIndex();return {mode:"full",groups:GROUPS.map(g=>({g,ex:[g.ex[i]]}))}}
+  if(pick.includes("full")){const i=fullIndex(),sw=day(cur).swap;return {mode:"full",groups:GROUPS.map(g=>({g,ex:[g.ex[sw[g.id]!==undefined?sw[g.id]:i]]}))}}
   return {mode:"pick",groups:GROUPS.filter(g=>pick.includes(g.id)).map(g=>({g,ex:g.ex}))};
 }
 function daysSince(g){
@@ -401,7 +413,7 @@ function renderWeek(){
   const mins=z2.reduce((a,k)=>a+(parseInt(days[k].z2.min)||30),0);
   const lift=wk.filter(k=>GROUPS.some(g=>groupHit(k,g))).length;
   const mob=wk.filter(k=>days[k]&&mobDay(days[k])).length;
-  const ws=wk.filter(k=>days[k]&&Object.keys(days[k].ws||{}).length>=4).length;
+  const ws=wk.filter(k=>days[k]&&Object.keys(days[k].ws||{}).length>=WS.length).length;
   const hips=wk.map(k=>days[k]&&days[k].hip).filter(Boolean);
   $("weekline").innerHTML=`<span>Wall sits <b>${ws}</b>/7</span><span>Weights days <b>${lift}</b></span><span>Zone 2 walks <b>${z2.length}</b>${z2.length?` · <b>${mins}</b> min`:""}</span><span>Mobility days <b>${mob}</b></span>${hips.length?`<span>Left hip <b>${hips.join(", ")}</b> /5</span>`:""}`;
 }
@@ -441,6 +453,7 @@ function renderGroups(){
       <button class="ghead" data-toggle="${g.id}" aria-expanded="${open.has(g.id)}">
         <h2>${g.name}</h2><span class="tag">${g.size}${g.sub?" · "+g.sub:""}</span>
         <span class="count ${n===ex.length?"full":""}">${n}/${ex.length}</span><span class="chev">▾</span></button>
+      ${p.mode==="full"?`<div class="swaprow"><button class="swapbtn" data-swap="${g.id}">⇄ Swap for a different ${g.name.toLowerCase()} exercise</button></div>`:""}
       <ul class="exlist">${ex.map(e=>exHtml(e,d)).join("")}</ul>
       ${g.id==="core"&&p.mode!=="full"?`<div class="cx"><h4>Core extras</h4><div class="chips">${chipList(CX,"cx")}</div></div>`:""}
     </section>`}).join("");
@@ -473,9 +486,28 @@ function exHtml(e,d){
       <div class="hint">Type today's weights. Grey numbers are your last lift.</div>
     </div></li>`;
 }
+function summaryLines(){
+  const d=day(cur),lines=[],groups=GROUPS.filter(g=>g.ex.some(e=>d.done[e.id]||(d.sets[e.id]&&d.sets[e.id].some(Boolean))));
+  if(groups.length)lines.push("Trained: "+groups.map(g=>g.name).join(" + "));
+  let sets=0;ALLEX.forEach(e=>{if(d.sets[e.id])sets+=d.sets[e.id].filter(Boolean).length});if(sets)lines.push(sets+(sets===1?" set":" sets")+" ticked");
+  ALLEX.forEach(e=>{const k=d.kg[e.id];if(k&&k.some(has)&&(d.done[e.id]||d.sets[e.id])){const nm=d.used[e.id]==="alt"&&e.alt?e.alt:e.name;lines.push(nm+": "+k.filter(has).join(" / ")+" kg")}});
+  const ws=Object.keys(d.ws).length;if(ws)lines.push("Wall sits: "+ws+" of "+WS.length);
+  if(d.z2.done)lines.push("Zone 2: "+(d.z2.min||30)+" min "+(d.z2.where===1?"up Bukit Timah Hill":"on the treadmill")+(d.z2.where!==1&&d.z2.inc?" at "+d.z2.inc+"%":""));
+  if(d.hip)lines.push("Left hip in pigeon: "+d.hip+"/5");
+  return lines;
+}
+function renderDone(){
+  const d=day(cur),f=d.finished;$("donecard").classList.toggle("isfinished",!!f);
+  $("finish").textContent=f?"Workout done ✓":"Finish workout";
+  if(!f){$("summary").hidden=true;return}
+  const lines=summaryLines(),when=new Date(f).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+  $("summary").hidden=false;
+  $("summary").innerHTML=`<p>Finished at ${when}. Nice work.</p>${lines.length?`<ul class="sumlist">${lines.map(l=>"<li>"+esc(l)+"</li>").join("")}</ul>`:"<p>Nothing ticked today.</p>"}
+    <div class="sumbtns"><button id="copysum">Copy summary</button><button id="unfinish">Undo finish</button></div>`;
+}
 function renderAll(){renderDate();renderPick();renderWeek();
   $("ws").innerHTML=WS.map((w,i)=>`<button class="chip ${day(cur).ws[i]?"on":""}" data-chip="ws" data-id="${i}">${w[0]} <small>${w[1]}</small></button>`).join("");
-  renderWarm();renderFin();renderGroups();wsIdle()}
+  renderWarm();renderFin();renderGroups();renderDone();wsIdle()}
 function rerenderEx(id){
   const e=ALLEX.find(x=>x.id===id),li=$("ex-"+id);if(!li)return;const wasOpen=li.classList.contains("open");
   li.outerHTML=exHtml(e,day(cur));if(wasOpen)$("ex-"+id).classList.add("open");
@@ -493,12 +525,18 @@ function softTone(){
   }catch(e){}
   try{navigator.vibrate&&navigator.vibrate(200)}catch(e){}
 }
+function blip(){
+  try{unlockAudio();if(!actx)return;const now=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();o.type="sine";o.frequency.value=523;
+    g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(0.04,now+0.01);g.gain.exponentialRampToValueAtTime(0.0001,now+0.12);
+    o.connect(g);g.connect(actx.destination);o.start(now);o.stop(now+0.15)}catch(e){}
+  try{navigator.vibrate&&navigator.vibrate(40)}catch(e){}
+}
 let wake=null;
 function keepAwake(on){try{if(on&&!wake&&navigator.wakeLock)navigator.wakeLock.request("screen").then(l=>{wake=l;l.addEventListener("release",()=>{wake=null})}).catch(()=>{});if(!on&&wake){wake.release();wake=null}}catch(e){}}
 const fmt=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
 
 // ===================== rest timer (between sets) =====================
-let restEnd=0,restT=null,restLabel="";
+let restEnd=0,restT=null,restLabel="",restBeep=0;
 function startRest(label){
   restEnd=Date.now()+REST*1000;restLabel=label;
   $("rest").hidden=false;$("rest").classList.remove("ready");
@@ -507,7 +545,9 @@ function startRest(label){
 function restTick(){
   const left=Math.max(0,Math.ceil((restEnd-Date.now())/1000));
   $("rclock").textContent=fmt(left);
+  if(left>0&&left<=3&&left!==restBeep){restBeep=left;blip()}
   if(left>0){$("rphase").textContent="Rest · next: "+restLabel;return}
+  restBeep=0;
   clearInterval(restT);restT=null;softTone();
   $("rest").classList.add("ready");$("rphase").textContent="Go: "+restLabel;$("rskip").textContent="Done";
   if(wsPhase==="idle")keepAwake(false);
@@ -515,16 +555,17 @@ function restTick(){
 function stopRest(){clearInterval(restT);restT=null;$("rest").hidden=true;$("rskip").textContent="Skip";if(wsPhase==="idle")keepAwake(false)}
 
 // ===================== wall sit timer =====================
-let wsT=null,wsEnd=0,wsPhase="idle",wsSet=0;
-function nextSet(){const d=day(cur);for(let i=0;i<4;i++)if(!d.ws[i])return i;return -1}
+let wsT=null,wsEnd=0,wsPhase="idle",wsSet=0,wsBeep=0;
+function nextSet(){const d=day(cur);for(let i=0;i<WS.length;i++)if(!d.ws[i])return i;return -1}
 function wsIdle(){if(wsPhase!=="idle")return;const n=nextSet();$("wstimer").className="timer";
-  $("wsclock").textContent="2:00";$("wsphase").textContent=n<0?"All 4 sets done today":"Ready for set "+(n+1);
+  $("wsclock").textContent="2:00";$("wsphase").textContent=n<0?"Both sets done today":"Ready for set "+(n+1);
   $("wsgo").textContent=n<0?"Done":"Start set "+(n+1);$("wsgo").disabled=n<0}
 function wsBegin(phase){wsPhase=phase;wsEnd=Date.now()+120000;$("wstimer").className="timer "+phase;
   $("wsphase").textContent=phase==="hold"?"Hold set "+(wsSet+1):"Rest. Set "+(nextSet()+1)+" next"}
 function wsTick(){
   const left=Math.max(0,Math.ceil((wsEnd-Date.now())/1000));$("wsclock").textContent=fmt(left);
-  if(left>0)return;softTone();
+  if(left>0&&left<=3&&left!==wsBeep){wsBeep=left;blip()}
+  if(left>0)return;wsBeep=0;softTone();
   if(wsPhase==="hold"){const d=day(cur);d.ws[wsSet]=true;save(cur);renderAll();
     if(nextSet()<0){wsStop();return}wsBegin("rest")}
   else{wsSet=nextSet();wsBegin("hold")}
@@ -546,7 +587,12 @@ document.addEventListener("click",ev=>{
     if(!s.some(Boolean))delete d.sets[id];
     save(cur);rerenderEx(id);renderWeek();updateCounts();
     if(s[i]){const nxt=s.findIndex(v=>!v);const nm=d.used[id]==="alt"&&e.alt?e.alt:e.name;
-      startRest(nxt>=0?`set ${nxt+1} of ${nm}`:"next exercise")}
+      startRest(nxt>=0?`set ${nxt+1} of ${nm}`:"next exercise");
+      const li=$("ex-"+id),inp=$("kg-"+id+"-"+i);
+      if(li&&inp){li.classList.add("open");
+        if(!inp.value&&inp.placeholder){inp.value=inp.placeholder;const arr=d.kg[id]||["","",""];arr[i]=inp.placeholder;d.kg[id]=arr;save(cur)}
+        inp.focus();try{inp.select()}catch(_){}
+        inp.scrollIntoView({block:"center",behavior:"smooth"})}}
     return}
   if(t.dataset.tick){const id=t.dataset.tick,e=ALLEX.find(x=>x.id===id);
     if(exDone(d,e)){delete d.done[id];delete d.sets[id]}else{d.done[id]=true;d.sets[id]=[true,true,true]}
@@ -558,6 +604,12 @@ document.addEventListener("click",ev=>{
   if(t.dataset.pick){const id=t.dataset.pick;let p=d.pick.slice();
     if(id==="full")p=p.includes("full")?[]:["full"];else{p=p.filter(x=>x!=="full");p=p.includes(id)?p.filter(x=>x!==id):[...p,id]}
     d.pick=p;save(cur);renderAll();return}
+  if(t.dataset.swap){const g=t.dataset.swap,cur0=plan().groups.find(x=>x.g.id===g).ex[0],idx=GROUPS.find(x=>x.id===g).ex.indexOf(cur0);
+    d.swap[g]=(idx+1)%5;save(cur);renderGroups();return}
+  if(t.id==="finish"){if(!d.finished){d.finished=new Date().toISOString();stopRest();if(wsPhase!=="idle")wsStop();keepAwake(false);softTone();save(cur)}renderDone();$("donecard").scrollIntoView({block:"start",behavior:"smooth"});return}
+  if(t.id==="unfinish"){d.finished="";save(cur);renderDone();return}
+  if(t.id==="copysum"){const txt=["Condo Weights, "+parse(cur).toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"}),...summaryLines()].join("\n");
+    const ok=()=>{t.textContent="Copied"},fail=()=>{t.textContent="Couldn't copy"};try{navigator.clipboard.writeText(txt).then(ok,fail)}catch(e){fail()}return}
   if(t.dataset.usesug){d.pick=suggestion().ids;save(cur);renderAll();return}
   if(t.id==="showall"){d.pick=[];save(cur);renderAll();return}
   if(t.dataset.tech){const id=t.dataset.tech;d.tech[id]=d.tech[id]===t.dataset.v?undefined:t.dataset.v;if(!d.tech[id])delete d.tech[id];save(cur);rerenderEx(id);return}
