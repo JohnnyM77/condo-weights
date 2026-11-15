@@ -120,6 +120,13 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
 .log input{font-family:var(--mono);font-size:1rem;width:100%;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
 .log .hint{font-size:.78rem;color:var(--muted)}
 .swaprow{padding:0 14px 10px}
+.rowbtns{display:flex;flex-direction:column;gap:6px;flex:none}
+.swapx{color:var(--muted)!important;font-size:.95rem!important}
+.swapopts{padding:0 14px 12px 56px;display:flex;flex-direction:column;gap:6px}
+.badge.lite{background:var(--bg);color:var(--fg);border:1px solid var(--line)}
+.resetbtn{background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.78rem;color:var(--muted);white-space:nowrap}
+.resetbtn.armed{background:var(--p-legs);border-color:var(--p-legs);color:#fff}
+header{flex-direction:row!important;justify-content:space-between;align-items:flex-start;gap:10px}
 .swapbtn{background:transparent;border:1px dashed var(--line);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:.85rem;color:var(--fg);width:100%;text-align:left}
 .cx{padding:12px 14px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 
@@ -177,8 +184,9 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
 
 <div class="wrap">
   <header>
-    <h1>Condo Weights</h1>
-    <div class="sub">1 big + 1 small muscle group per session. Think about the squeeze.</div>
+    <div><h1>Condo Weights</h1>
+    <div class="sub">1 big + 1 small muscle group per session. Think about the squeeze.</div></div>
+    <button class="resetbtn" id="reset">Reset today</button>
   </header>
 
   <div class="datebar">
@@ -227,7 +235,7 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
       <label for="z2min">Minutes <input id="z2min" inputmode="numeric" placeholder="30"></label>
       <label for="z2inc">Incline % <input id="z2inc" inputmode="decimal" placeholder="10"></label>
     </div>
-    <button class="linkbtn" data-demo="zone2">▶ Watch Xander do it</button>
+    <button class="linkbtn" id="z2demo" data-demo="zone2">▶ Watch Xander do it</button>
     <div class="or">
       <h4>Or swap in: the stairs</h4>
       <p>Walk the stairs, 10 reps of a different move at each level.</p>
@@ -283,7 +291,9 @@ const GROUPS=[
   ["Leg Extensions","Back Low Lunge + Weight",[63,57,52],1],
   ["Hamstring Curls","Glute Raise + Weight",[25,25,20],1],
   ["Bulgarian Split Squats +15kg","Heel Raised Squats + Weight",null],
-  ["Plyo Hip Raise ×15","Goblet Squat ×15",null]]},
+  ["Plyo Hip Raise ×15","Goblet Squat ×15",null],
+  ["DB Romanian Deadlift","Single Leg RDL",[23,23,23],0,"rdl","rdl"],
+  ["Step-ups onto Bench","Lateral Step-ups",[12,12,12],0,"stepup","stepup"]]},
  {id:"chest",name:"Chest",size:"Big",pc:"--p-chest",ex:[
   ["Heavy Machine Bench","Feet Raised Push-ups",[91,84,77],1],
   ["Neutral Grip DB Press","DB Pull-overs",[28,28,28]],
@@ -295,31 +305,49 @@ const GROUPS=[
   ["Seated Machine Rows",null,[77,70,63],1],
   ["DB Chest-Supported Incline Row","2 Arm Bent Row",[23,23,23]],
   ["Shrugs (Heavy)","One Arm Bent Over DB",[28,28,28]],
-  ["Cuban Press, light weight","Man Makers with 15kg DB",[12,10,8]]]},
+  ["Cuban Press, light weight","Man Makers with 15kg DB",[12,10,8]],
+  ["Pull-ups (assisted if needed)","Negative Pull-ups",null,0,"pullup","pullup"]]},
  {id:"arms",name:"Arms",size:"Small",sub:"Tris + Bis",pc:"--p-arms",ex:[
   ["Machine Pull-downs (Tris)","DB 3-Stop Lying Tri Extension",[48,43,38]],
   ["Dips ×12","Overhead Tri with Rotation",null],
   ["DB Floor Press","Tri Kickbacks",[28,28,28]],
   ["Bis: Bent Over Punches ×50","Box Jump Burpee",[15,12,12]],
-  ["Bis: Incline DB Curl","Concentration Curls",[15,12,12],0,"curl"]]},
+  ["Bis: Incline DB Curl","Concentration Curls",[15,12,12],0,"curl"],
+  ["Bis: Hammer Curls","Cross-body Hammer Curls",[15,15,12],0,"hammer","hammer"]]},
  {id:"shoulders",name:"Shoulders",size:"Small",pc:"--p-shoulders",ex:[
   ["Full Raise, Slow Lower","Side Lat Raises (Side Grip)",[10,8,5]],
   ["Arnold Raises","Side Plank Lat Raise",[23,18,18]],
   ["Face Pulls (rope)","Band Face Pulls",null,0,"facepull","facepull"],
   ["External Rotation","F45 Push-ups Feet Raised",[10,10,10]],
-  ["1 Arm Press Up","Alternating Shoulder Press",[23,18,18]]]},
+  ["1 Arm Press Up","Alternating Shoulder Press",[23,18,18]],
+  ["Machine Shoulder Press","Scaption & Shrug",[63,57,52],1,"machpress","shoulders2"]]},
  {id:"core",name:"Core",size:"Small",pc:"--p-core",ex:[
   ["15 Hip Hinge + 30 KB Swing","Horizontal Cable Chop",[18,18,15]],
   ["Decline Crunch + Twist ×12","Lying Reverse Crunch",null],
   ["DB Side Bend","Overhead DB Side Bend",[28,28,23]],
   ["Russian Twists 15kg","Lying Toe Taps ×50",[12,12,12]],
-  ["Back Hyperextension","Hanging Leg Raises ×12",null]]},
- {id:"extra",name:"Extras",size:"Optional",pc:"--p-shoulders",extra:true,ex:[
-  ["Machine Shoulder Press","Scaption & Shrug",[63,57,52],1,"machpress","shoulders2"]]}
+  ["Back Hyperextension","Hanging Leg Raises ×12",null],
+  ["Farmer's Carry","Suitcase Carry (one hand)",[28,28,28],0,"farmer","farmer"],
+  ["Pallof Press","Half-kneeling Pallof Press",null,0,"pallof","pallof"],
+  ["Dead Bug","Bird Dog",null,0,"deadbug","deadbug"],
+  ["Copenhagen Side Plank","Short-lever Copenhagen (knee on bench)",null,0,"copenhagen","copenhagen"]]}
 ];
+const REPS={legs0:"3 × 12 each leg",legs3:"3 × 10 each leg",legs4:"3 × 15",rdl:"3 × 10",stepup:"3 × 10 each leg",pullup:"3 × max reps",
+  back3:"3 × 12",arms0:"3 × 12",arms1:"3 × 12",arms3:"3 × 50 punches",arms4:"3 × 12",hammer:"3 × 12",facepull:"3 × 15",shoulders3:"3 × 12",
+  core0:"3 × 15 + 30",core1:"3 × 12",core2:"3 × 12 each side",core3:"3 × 20",core4:"3 × 12",farmer:"3 × 40 m walk",pallof:"3 × 10 each side",
+  deadbug:"3 × 10 each side",copenhagen:"3 × 20s each side"};
+const DEFAULT_LINEUP={core:["core0","core1","farmer","core3","core4"]};
 const EXDEMO={legs0:"calf",legs1:"legext",legs2:"hamcurl",legs3:"bulgarian",legs4:"hipraise",chest0:"machbench",chest1:"dbpress",chest2:"dbfly",chest3:"inclpress",chest4:"inclfly",back0:"pulldown",back1:"row",back2:"csrow",back3:"shrug",back4:"cuban",arms0:"tripush",arms1:"dips",arms2:"floorpress",arms3:"punch",shoulders0:"fullraise",shoulders1:"arnold",shoulders2:"machpress",shoulders3:"extrot",shoulders4:"onepress",core0:"swing",core1:"crunch",core2:"sidebend",core3:"russian",core4:"hyper"};
 GROUPS.forEach(g=>g.ex=g.ex.map((e,i)=>{const id=e[5]||g.id+i;return {id,g:g.id,name:e[0],alt:e[1],base:e[2],heavy:!!e[3],demo:e[4]||EXDEMO[id]||null,cable:/cable|face pull/i.test(e[0])}}));
-const MAIN=GROUPS.filter(g=>!g.extra),EXTRA=GROUPS.find(g=>g.extra);
+GROUPS.forEach(g=>g.ex.forEach(e=>e.reps=REPS[e.id]||(e.heavy?"3 × 7 heavy":"3 × 10")));
+const MAIN=GROUPS;
+let LINEUP={};try{LINEUP=JSON.parse(localStorage.getItem("cw-lineup")||"{}")}catch(e){}
+function lineup(g){
+  const ids=(LINEUP[g.id]||DEFAULT_LINEUP[g.id]||g.ex.slice(0,5).map(e=>e.id)).filter(id=>g.ex.some(e=>e.id===id));
+  while(ids.length<5){const n=g.ex.find(e=>!ids.includes(e.id));if(!n)break;ids.push(n.id)}
+  return ids.slice(0,5).map(id=>g.ex.find(e=>e.id===id));
+}
+function setLineup(gid,ids){LINEUP[gid]=ids;try{localStorage.setItem("cw-lineup",JSON.stringify(LINEUP))}catch(e){}}
 const ALLEX=GROUPS.flatMap(g=>g.ex);
 const BIG=["legs","chest","back"],SMALL=["arms","shoulders","core"];
 const WU=[["Cat-Cow","×10","catcow"],["Leg Swings","×10 each way","legswing"],["Hip Circles","×10 each way","hipcircle"],["Arm Circles","×10 each way","armcircle"],["Thoracic Rotations","×8 each side","throt"],["Inchworms","×5","inchworm"],["World's Greatest Stretch","×3 each side","wgs"],["Deep Squat Hold","30s","deepsquat"]];
@@ -327,7 +355,7 @@ const MOBH=[["Pigeon Pose","60s each side, +30s left","pigeon"],["90/90 Hip Swit
 const MOBS=[["Shoulder CARs","×5 each way","shcar"],["Wall Slides","×12","wallslide"],["Band Pull-aparts","×15","pullapart"],["Thoracic Open Books","×8 each side","openbook"],["Sleeper Stretch","45s each side","sleeper"],["Dead Hang","30 to 45s","hang"]];
 const CX=[["Plank alternates","3 min","plank"],["Side Plank with dips","×2 each side","sideplank"],["Supermans","×10","superman"],["Toe Taps","×50","toetap"],["V-Sit-ups","×10","vsit"],["Hollow Body Hold","1 min","hollow"]];
 const FIN=["Deep Squat","Sissy Squat","Side Squat","Front Squat","Back Squat","Wall Sits","Calf Raises"];
-const Z2WHERE=["Condo treadmill","Bukit Timah Hill"];
+const Z2WHERE=["Condo treadmill","Bukit Timah Hill","4 × 4 hill intervals"];
 const WS=[["Set 1","2 min"],["Set 2","2 min"]];
 const TECH=["21s","1.5s","Shock"];
 const REST=120;
@@ -357,10 +385,9 @@ function mobDay(d){return Object.keys(d.mob||{}).length||Object.keys(d.mobH||{})
 function fullIndex(){return Object.keys(days).filter(k=>k<cur&&days[k].pick&&days[k].pick.includes("full")).length%5}
 function plan(){
   const pick=day(cur).pick;
-  const X={g:EXTRA,ex:EXTRA.ex};
-  if(!pick.length)return {mode:"all",groups:[...MAIN.map(g=>({g,ex:g.ex})),X]};
-  if(pick.includes("full")){const i=fullIndex(),sw=day(cur).swap;return {mode:"full",groups:[...MAIN.map(g=>({g,ex:[g.ex[sw[g.id]!==undefined?sw[g.id]:i]]})),X]}}
-  return {mode:"pick",groups:[...MAIN.filter(g=>pick.includes(g.id)).map(g=>({g,ex:g.ex})),X]};
+  if(!pick.length)return {mode:"all",groups:MAIN.map(g=>({g,ex:lineup(g)}))};
+  if(pick.includes("full")){const i=fullIndex(),sw=day(cur).swap;return {mode:"full",groups:MAIN.map(g=>{const L=lineup(g);return {g,ex:[L[sw[g.id]!==undefined?sw[g.id]%L.length:i]]}})}}
+  return {mode:"pick",groups:MAIN.filter(g=>pick.includes(g.id)).map(g=>({g,ex:lineup(g)}))};
 }
 function daysSince(g){
   const last=Object.keys(days).filter(k=>k<cur&&groupHit(k,g)).sort().pop();
@@ -468,15 +495,20 @@ function renderWarm(){
   const pick=d.pick,p=plan();
   const showH=p.mode!=="pick"||pick.some(x=>x==="legs"||x==="core");
   const showS=p.mode!=="pick"||pick.some(x=>["chest","back","arms","shoulders"].includes(x));
-  el.innerHTML=`<button class="linkbtn" id="wuchoose">Choose my warm-up (pick a few, then follow along with Xander)</button>
+  const vis=visibleWU(),tot=vis.reduce((a,x)=>a+secsFor(x.w[1]),0);
+  el.innerHTML=`<button class="go startwu" id="wustart">▶ Play warm-up with Xander · ${vis.length} moves · about ${Math.round(tot/60)} min</button>
+    <button class="linkbtn" id="wuchoose">Choose my warm-up (pick just the moves you want)</button>
     <div class="chips">${chipList(WU,"wu")}</div>
     ${showH?`<div class="mobsec"><h4>Hips${p.mode==="pick"?" (legs day)":""}</h4><div class="chips">${chipList(MOBH,"mob")}</div>${hipScore()}</div>`:""}
     ${showS?`<div class="mobsec"><h4>Shoulders${p.mode==="pick"?" (upper body day)":""}</h4><div class="chips">${chipList(MOBS,"mob")}</div></div>`:""}`;
 }
 // ---- guided warm-up: Xander does each move on a timer, then moves on ----
 let guide=null;
+function visibleWU(){const d=day(cur),pick=d.pick,p=plan();
+  const showH=p.mode!=="pick"||pick.some(x=>x==="legs"||x==="core"),showS=p.mode!=="pick"||pick.some(x=>["chest","back","arms","shoulders"].includes(x));
+  return ALLWU.filter(x=>x.sec==="Warm up")}
 function startGuide(){
-  const sel=wsel(),items=ALLWU.filter(x=>sel.includes(x.w[0])&&x.w[2]);if(!items.length)return;
+  const sel=wsel(),items=(sel.length?ALLWU.filter(x=>sel.includes(x.w[0])):visibleWU()).filter(x=>x.w[2]);if(!items.length)return;
   guide={items,idx:0,end:0,left:0,paused:false,beep:0,switched:false,t:null};keepAwake(true);gStep();
 }
 function gStep(){
@@ -507,7 +539,7 @@ function renderFin(){
   $("z2where").innerHTML=Z2WHERE.map((w,i)=>`<button class="chip ${where===i?"on":""}" data-z2w="${i}">${w}</button>`).join("");
   if(document.activeElement!==$("z2min"))$("z2min").value=z.min||"";
   if(document.activeElement!==$("z2inc"))$("z2inc").value=z.inc||"";
-  $("z2inc").closest("label").hidden=where!==0;
+  $("z2inc").closest("label").hidden=where===1;$("z2demo").dataset.demo=where===2?"intervals":"zone2";
   $("fin").innerHTML=FIN.map((w,i)=>`<button class="chip ${d.fin[i]?"on":""}" data-chip="fin" data-id="${i}">${esc(w)}</button>`).join("");
 }
 function renderGroups(){
@@ -530,7 +562,7 @@ function exHtml(e,d){
   else if(prev)target=prev.kg.map(v=>`<span class="kg">${esc(has(v)?v:"–")}</span>`).join("")+`<span class="bw">last ${parse(prev.date).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</span>`;
   else if(e.base)target=e.base.map(v=>`<span class="kg">${v}</span>`).join("");
   else target=`<span class="bw">${e.cable?"Cable or band: log your weight":"Bodyweight / reps"}</span>`;
-  if(e.heavy)target+=`<span class="badge">Heavy ×7</span>`;
+  target+=`<span class="badge ${e.heavy?"":"lite"}">${esc(e.reps)}</span>`;
   if(d.tech[e.id])target+=`<span class="badge t4">4th: ${esc(d.tech[e.id])}</span>`;
   const ph=(prev?prev.kg:e.base)||["","",""],vals=today||["","",""];
   return `<li class="ex ${exDone(d,e)?"done":""}" id="ex-${e.id}">
@@ -541,8 +573,9 @@ function exHtml(e,d){
         ${e.alt?`<div class="alt">${usedAlt?"Main: <b>"+esc(e.name)+"</b>":"Alt: <b>"+esc(e.alt)+"</b>"}</div>`:""}
         <div class="target">${target}</div>
       </div>
-      ${e.demo?`<button class="rowplay" data-demo="${e.demo}" aria-label="Watch ${esc(e.name)} demo">▶</button>`:""}
+      <div class="rowbtns">${e.demo?`<button class="rowplay" data-demo="${e.demo}" aria-label="Watch ${esc(e.name)} demo">▶</button>`:""}<button class="rowplay swapx" data-swapbtn="${e.id}" aria-label="Swap ${esc(e.name)} for another exercise">⇄</button></div>
     </div>
+    <div class="swapopts" id="so-${e.id}" hidden><h4>Swap for</h4><div class="chips">${GROUPS.find(g=>g.id===e.g).ex.filter(o=>!lineup(GROUPS.find(g=>g.id===e.g)).includes(o)).map(o=>`<button class="chip" data-swapfrom="${e.id}" data-swapto="${o.id}">${esc(o.name)} <small>${esc(o.reps)}</small></button>`).join("")}</div></div>
     <div class="setrow">${[0,1,2].map(i=>`<button class="set ${sets[i]?"on":""}" data-set="${e.id}" data-i="${i}" aria-pressed="${!!sets[i]}">Set ${i+1}</button>`).join("")}</div>
     <div class="log">
       <div class="sets">${[0,1,2].map(i=>`<label for="kg-${e.id}-${i}">Set ${i+1} kg<input id="kg-${e.id}-${i}" inputmode="decimal" data-kg="${e.id}" data-i="${i}" value="${esc(vals[i]??"")}" placeholder="${esc(ph[i]??"")}"></label>`).join("")}</div>
@@ -557,7 +590,7 @@ function summaryLines(){
   let sets=0;ALLEX.forEach(e=>{if(d.sets[e.id])sets+=d.sets[e.id].filter(Boolean).length});if(sets)lines.push(sets+(sets===1?" set":" sets")+" ticked");
   ALLEX.forEach(e=>{const k=d.kg[e.id];if(k&&k.some(has)&&(d.done[e.id]||d.sets[e.id])){const nm=d.used[e.id]==="alt"&&e.alt?e.alt:e.name;lines.push(nm+": "+k.filter(has).join(" / ")+" kg")}});
   const ws=Object.keys(d.ws).length;if(ws)lines.push("Wall sits: "+ws+" of "+WS.length);
-  if(d.z2.done)lines.push("Zone 2: "+(d.z2.min||30)+" min "+(d.z2.where===1?"up Bukit Timah Hill":"on the treadmill")+(d.z2.where!==1&&d.z2.inc?" at "+d.z2.inc+"%":""));
+  if(d.z2.done)lines.push("Zone 2: "+(d.z2.min||30)+" min "+(d.z2.where===1?"up Bukit Timah Hill":d.z2.where===2?"of 4 × 4 hill intervals":"on the treadmill")+(d.z2.where!==1&&d.z2.inc?" at "+d.z2.inc+"%":""));
   if(d.hip)lines.push("Left hip in pigeon: "+d.hip+"/5");
   return lines;
 }
@@ -669,7 +702,10 @@ document.addEventListener("click",ev=>{
   if(t.dataset.pick){const id=t.dataset.pick;let p=d.pick.slice();
     if(id==="full")p=p.includes("full")?[]:["full"];else{p=p.filter(x=>x!=="full");p=p.includes(id)?p.filter(x=>x!==id):[...p,id]}
     d.pick=p;save(cur);renderAll();return}
-  if(t.dataset.swap){const g=t.dataset.swap,cur0=plan().groups.find(x=>x.g.id===g).ex[0],idx=GROUPS.find(x=>x.id===g).ex.indexOf(cur0);
+  if(t.dataset.swapbtn){const so=$("so-"+t.dataset.swapbtn);if(so)so.hidden=!so.hidden;return}
+  if(t.dataset.swapto){const from=t.dataset.swapfrom,to=t.dataset.swapto,e=ALLEX.find(x=>x.id===from),g=GROUPS.find(x=>x.id===e.g);
+    const ids=lineup(g).map(x=>x.id);ids[ids.indexOf(from)]=to;setLineup(g.id,ids);renderGroups();return}
+  if(t.dataset.swap){const g=t.dataset.swap,cur0=plan().groups.find(x=>x.g.id===g).ex[0],idx=lineup(GROUPS.find(x=>x.id===g)).indexOf(cur0);
     d.swap[g]=(idx+1)%5;save(cur);renderGroups();return}
   if(t.id==="finish"){if(!d.finished){d.finished=new Date().toISOString();stopRest();if(wsPhase!=="idle")wsStop();keepAwake(false);softTone();save(cur)}renderDone();$("donecard").scrollIntoView({block:"start",behavior:"smooth"});return}
   if(t.id==="unfinish"){d.finished="";save(cur);renderDone();return}
@@ -683,6 +719,10 @@ document.addEventListener("click",ev=>{
   if(t.id==="gpause"&&guide){if(guide.paused){guide.end=Date.now()+guide.left*1000;guide.paused=false;t.textContent="Pause"}else{guide.left=Math.max(0,Math.ceil((guide.end-Date.now())/1000));guide.paused=true;t.textContent="Resume"}return}
   if(t.id==="gskip"&&guide){guide.idx++;if(guide.idx<guide.items.length)gStep();else stopGuide();return}
   if(t.id==="gstop"){stopGuide();return}
+  if(t.id==="reset"){
+    if(!t.classList.contains("armed")){t.classList.add("armed");t.textContent="Tap again to clear today";setTimeout(()=>{t.classList.remove("armed");t.textContent="Reset today"},3000);return}
+    t.classList.remove("armed");t.textContent="Reset today";if(guide)stopGuide();stopRest();if(wsPhase!=="idle")wsStop();choosing=false;
+    days[cur]=norm({});save(cur);renderAll();setStatus("Today cleared");return}
   if(t.dataset.usesug){d.pick=suggestion().ids;save(cur);renderAll();return}
   if(t.id==="showall"){d.pick=[];save(cur);renderAll();return}
   if(t.dataset.tech){const id=t.dataset.tech;d.tech[id]=d.tech[id]===t.dataset.v?undefined:t.dataset.v;if(!d.tech[id])delete d.tech[id];save(cur);rerenderEx(id);return}
@@ -1210,6 +1250,55 @@ function DV2(id,name,dose,cue,a,b,opt={}){
  DV2("facepull","Face Pulls","3 × 15","Rope at head height. Pull it to your face with elbows high and wide, hands finishing beside your ears, squeeze the upper back.",
   {poses:[sA,sB],label:"SIDE",bg:x=>PR.frame(x,176,44,176),fg:(x,p)=>{PR.cable(x,p.hB,[176,46]);PR.band(x,[p.hB[0]-3,p.hB[1]-4],[p.hB[0]-3,p.hB[1]+4])}},
   {poses:[fA,fB],label:"FRONT",fg:(x,p)=>PR.band(x,p.hA,p.hB)});}
+
+// ---- new options ----
+{const A=mk({N:[100,50],P:[100,92],e:[102,70],h:[103,90],k:[102,120],f:[105,150]}),B=mk({N:[124,78],P:[84,94],e:[122,100],h:[120,122],k:[98,122],f:[104,150]});
+ D("rdl","DB Romanian Deadlift","3 × 10","Soft knees, push your hips back and slide the dumbbells down your thighs to mid-shin with a flat back. Squeeze the glutes to stand up.",[A,B],{fg:dbs});}
+{const A=mk({N:[96,50],P:[96,92],e:[98,70],h:[98,90],k:[120,106],f:[126,128],kA:[96,120],fA:[94,150]}),B=mk({N:[124,32],P:[124,74],e:[126,52],h:[126,72],k:[126,100],f:[128,128],kA:[118,102],fA:[112,126]});
+ D("stepup","Step-ups onto Bench","3×10/leg","Whole foot on the bench, drive up through that heel without pushing off the back foot, then step down slowly.",[A,B],{bg:x=>PR.box(x,104,128,160,150),fg:dbs});}
+{const bar=x=>{x.strokeStyle=C.muted;x.lineWidth=3;x.beginPath();x.moveTo(40,G);x.lineTo(40,26);x.lineTo(160,26);x.lineTo(160,G);x.stroke()};
+ const A0=mkF({N:[100,54],P:[100,96],H:[100,42],eA:[78,34],hA:[72,14],eB:[122,34],hB:[128,14],kA:[95,120],fA:[93,140],kB:[105,120],fB:[107,140]}),
+  B0=mkF({N:[100,28],P:[100,70],H:[100,14],eA:[74,40],hA:[72,14],eB:[126,40],hB:[128,14],kA:[95,94],fA:[93,114],kB:[105,94],fB:[107,114]});
+ const A=add(A0,0,14),B=add(B0,0,14);
+ D("pullup","Pull-ups","3 × max","Hands just wider than shoulders, pull your chest up to the bar, chin over, then lower all the way with control. Use the assist machine or a band if needed.",[A,B],{bg:bar});}
+{const A=mk({N:[100,50],P:[100,92],e:[103,70],h:[104,92],k:[102,120],f:[105,150]}),B=mk({N:[100,50],P:[100,92],e:[103,70],h:[114,52],k:[102,120],f:[105,150]});
+ D("hammer","Hammer Curls","3 × 12","Palms facing each other the whole time, elbows pinned to your sides. Curl up, squeeze, lower slowly.",[A,B],{fg:(x,p)=>PR.db(x,p.hB,Math.PI/2)});}
+DEMOS.farmer={name:"Farmer's Carry",cue:"Heavy dumbbells at your sides, stand tall, shoulders back and down. Walk with short quick steps and don't let them swing. 3 × 40 m.",dur:6000,draw(x,t){
+  ground(x);x.strokeStyle=C.line;x.lineWidth=2;for(let i=0;i<9;i++){const bx=10+((i*26-t*300)%234+234)%234;x.beginPath();x.moveTo(bx,G+4);x.lineTo(bx+10,G+4);x.stroke()}
+  const ph=t*Math.PI*2*5,bob=Math.abs(Math.sin(ph))*-1.2;
+  const leg=s=>{const fx=100+13*Math.sin(ph+s),fy=150-Math.max(0,4*Math.cos(ph+s));return[[(100+fx)/2+4,121+bob],[fx,fy]]};
+  const[kA,fA]=leg(0),[kB,fB]=leg(Math.PI);
+  const p={H:[100,38+bob],N:[100,50+bob],P:[100,92+bob],eA:[98,71+bob],hA:[98,92+bob],eB:[102,71+bob],hB:[102,92+bob],kA,fA,kB,fB};
+  fig(x,p,{mouth:"grit"});PR.db(x,p.hB,0,1.3);
+  txt(x,Math.min(40,Math.floor(t*41))+" m",DW-8,34,{mono:1,size:14,col:C.rust,align:"right"});
+  txt(x,"3 × 40 m",DW-8,18,{mono:1,size:11,col:C.rust,align:"right"})}};
+DEMOS.pallof={name:"Pallof Press",cue:"Stand side-on to a cable or band at chest height. Hold the handle at your chest, press it straight out, hold 2 seconds without letting it twist you, bring it back. 3 × 10 each side.",dur:6000,draw(x,t){
+  // seen from above: Xander faces down the screen, cable pulls from his left
+  const u=(t*3)%1,k=u<.35?ease(u/.35):u<.65?1:1-ease((u-.65)/.35);
+  x.fillStyle=C.line;x.fillRect(14,70,10,50);txt(x,"CABLE",19,64,{size:10,col:C.muted});txt(x,"FROM ABOVE",110,32,{size:11,col:C.muted,w:600});
+  const sh=[[84,92],[116,92]],hand=[100,96+34*k],el=[[92-2*(1-k),104+8*k],[108+2*(1-k),104+8*k]];
+  x.strokeStyle=C.muted;x.lineWidth=1.3;x.beginPath();x.moveTo(24,95);x.lineTo(hand[0],hand[1]);x.stroke();
+  seg(x,sh[0],sh[1],4.5,C.ink,1);[0,1].forEach(i=>{seg(x,sh[i],el[i],4.5,C.ink,1);seg(x,el[i],hand,4.5,C.ink,1);dot(x,el[i],2.4,C.rust)});
+  dot(x,hand,4,C.ink);head(x,[100,90],{mouth:k>.9?"grit":"smile"});
+  if(k>.9)txt(x,"hold, don't twist",160,150,{size:12,col:C.rust});
+  txt(x,"3 × 10 each side",DW-8,18,{mono:1,size:11,col:C.rust,align:"right"})}};
+{const T={N:[136,146],P:[96,146],H:[150,140],k:[96,118],f:[72,118],e:[128,126],h:[128,106]};
+ const A=mk(T),B=with_(A,{eB:[150,132],hB:[170,140],kA:[72,140],fA:[46,142]}),C2=with_(A,{eA:[150,132],hA:[170,140],kB:[72,140],fB:[46,142]});
+ D("deadbug","Dead Bug","3 × 10 each side","On your back, arms up, knees bent over hips. Lower one arm and the opposite leg slowly while your lower back stays pressed into the floor. Swap sides.",[A,B,A,C2],{reps:2,bg:x=>PR.mat(x,40,180)});}
+{const A=mk({N:[126,124],P:[86,136],H:[136,114],e:[128,150],h:[142,150],eA:[108,116],hA:[96,130],k:[62,128],f:[42,118],kA:[66,144],fA:[58,150]}),
+  B=mk({N:[126,124],P:[86,122],H:[136,114],e:[128,150],h:[142,150],eA:[108,110],hA:[96,122],k:[62,120],f:[42,118],kA:[64,124],fA:[44,124]});
+ D("copenhagen","Copenhagen Side Plank","3 × 20s each side","Side plank on your forearm with your top leg on the bench. Lift your hips and bring the bottom leg up to meet the bench. Hold.",[A,B],{hold:1,reps:2,bg:x=>PR.bench(x,22,62,118)});}
+DEMOS.intervals={name:"4 × 4 Hill Intervals",cue:"Treadmill on a steep incline. 4 minutes hard (you can only say a few words), 3 minutes easy walking. Repeat 4 times.",dur:7000,draw(x,t){
+  const hard=t<.57;x.save();x.translate(110,146);x.rotate(-0.16);x.translate(-110,-146);
+  x.strokeStyle=C.muted;x.lineWidth=3;x.beginPath();x.moveTo(44,144);x.lineTo(164,144);x.lineTo(176,96);x.stroke();x.fillStyle=C.line;x.fillRect(166,84,30,14);
+  x.strokeStyle=C.line;x.lineWidth=2;const sp=hard?700:350;for(let i=0;i<8;i++){const bx=44+((i*16-t*sp)%128+128)%128;x.beginPath();x.moveTo(bx,148);x.lineTo(bx+8,148);x.stroke()}x.restore();
+  const ph=t*Math.PI*2*(hard?11:6),st=hard?20:15,lift=hard?11:5,bob=Math.abs(Math.sin(ph))*-(hard?3:1.5),lean=hard?6:2,beltY=fx=>146-Math.tan(0.16)*(fx-110);
+  const leg=s=>{const fx=100+st*Math.sin(ph+s),fy=beltY(fx)-Math.max(0,lift*Math.cos(ph+s));return[[(102+fx)/2+6,(92+fy)/2+bob-(hard?4:0)],[fx,fy]]};
+  const[kA,fA]=leg(0),[kB,fB]=leg(Math.PI);const arm=s=>{const hx=103+lean-14*Math.sin(ph+s);return[[(103+hx)/2-3,66+bob],[hx+4,hard?74+bob:84+bob]]};
+  const[eA,hA]=arm(0),[eB,hB]=arm(Math.PI);
+  fig(x,{H:[105+lean,34+bob],N:[103+lean,46+bob],P:[100,90+bob],eA,hA,eB,hB,kA,fA,kB,fB},{mouth:hard?"oh":"smile"});
+  txt(x,hard?"HARD 4:00":"EASY 3:00",DW-8,40,{mono:1,size:13,col:hard?C.rust:C.good,align:"right"});
+  txt(x,"4 rounds",DW-8,18,{mono:1,size:11,col:C.rust,align:"right"})}};
 
 let demoId=null,demoRAF=0,demoStart=0;
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
