@@ -120,6 +120,17 @@ button:focus-visible,input:focus{outline:2px solid var(--accent);outline-offset:
 .log input{font-family:var(--mono);font-size:1rem;width:100%;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
 .log .hint{font-size:.78rem;color:var(--muted)}
 .swaprow{padding:0 14px 10px}
+.builder{border-top:5px solid var(--fg)}
+.olist{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.olist li{display:flex;align-items:center;gap:6px}
+.olist .oname{flex:1;min-width:0;font-weight:500}
+.olist .oname small{color:var(--muted);font-weight:400}
+.olist button{width:32px;height:32px;border:1px solid var(--line);background:transparent;border-radius:8px;cursor:pointer;flex:none}
+.olist button:disabled{opacity:.3}
+.ogroup{display:flex;flex-direction:column;gap:6px}
+.exlist.numbered{counter-reset:ex}
+.exlist.numbered .ex{counter-increment:ex}
+.exlist.numbered .exname::before{content:counter(ex) ". ";color:var(--muted)}
 .rowbtns{display:flex;flex-direction:column;gap:6px;flex:none}
 .swapx{color:var(--muted)!important;font-size:.95rem!important}
 .swapopts{padding:0 14px 12px 56px;display:flex;flex-direction:column;gap:6px}
@@ -203,7 +214,9 @@ header{flex-direction:row!important;justify-content:space-between;align-items:fl
     <div class="pickrow" id="pickrow"></div>
     <div class="suggest" id="suggest"></div>
     <button class="linkbtn" id="showall" hidden>Show everything</button>
+    <div id="orderbox"></div>
   </div>
+  <div class="card extra builder" id="builder" hidden></div>
 
   <div class="card extra" id="warmcard">
     <h3>Warm up <span class="sub" style="text-transform:none;letter-spacing:0;font-family:var(--body)">6 to 8 min</span></h3>
@@ -307,34 +320,47 @@ const GROUPS=[
   ["Bulgarian Split Squats +15kg","Heel Raised Squats + Weight",null],
   ["Plyo Hip Raise ×15","Goblet Squat ×15",null],
   ["DB Romanian Deadlift","Single Leg RDL",[23,23,23],0,"rdl","rdl"],
-  ["Step-ups onto Bench","Lateral Step-ups",[12,12,12],0,"stepup","stepup"]]},
+  ["Step-ups onto Bench","Lateral Step-ups",[12,12,12],0,"stepup","stepup"],
+  ["Cable Hip Abduction","Banded Side Walks",null,0,"hipabd","hipabd"],
+  ["Standing Cable Leg Curl","Swiss Ball Leg Curl",null,0,"cablelegcurl","cablelegcurl"]]},
  {id:"chest",name:"Chest",size:"Big",pc:"--p-chest",ex:[
   ["Heavy Machine Bench","Feet Raised Push-ups",[91,84,77],1],
   ["Neutral Grip DB Press","DB Pull-overs",[28,28,28]],
   ["DB Fly + Hex","F45 Pull-downs (Lats)",[20,18,15]],
   ["Incline DB Press","Decline DB Press",[28,28,23]],
-  ["Incline DB Fly","Decline DB Fly",[18,15,15]]]},
+  ["Incline DB Fly","Decline DB Fly",[18,15,15]],
+  ["Cable Crossover (high to low)","Low to High Crossover",null,0,"cablexover","cablexover"],
+  ["Cable Chest Fly","Single-arm Cable Fly",null,0,"cablefly","cablefly"],
+  ["Alternating Cable Chest Press","Single-arm Cable Press",null,0,"altpress","altpress"],
+  ["Smith Bench Press","Smith Incline Press",null,1,"smithbench","smithbench"]]},
  {id:"back",name:"Back",size:"Big",pc:"--p-back",ex:[
   ["Front Pull-downs (Wide, Mid, Close Grip)","Light Pull-downs to failure",[77,70,63],1],
   ["Seated Machine Rows",null,[77,70,63],1],
   ["DB Chest-Supported Incline Row","2 Arm Bent Row",[23,23,23]],
   ["Shrugs (Heavy)","One Arm Bent Over DB",[28,28,28]],
   ["Cuban Press, light weight","Man Makers with 15kg DB",[12,10,8]],
-  ["Pull-ups (assisted if needed)","Negative Pull-ups",null,0,"pullup","pullup"]]},
+  ["Pull-ups (assisted if needed)","Negative Pull-ups",null,0,"pullup","pullup"],
+  ["Cable Reverse Fly","DB Reverse Fly",null,0,"reversefly","reversefly"],
+  ["Single-arm Cable Row","Single-arm DB Row",null,0,"cablerow1","cablerow1"]]},
  {id:"arms",name:"Arms",size:"Small",sub:"Tris + Bis",pc:"--p-arms",ex:[
   ["Machine Pull-downs (Tris)","DB 3-Stop Lying Tri Extension",[48,43,38]],
   ["Dips ×12","Overhead Tri with Rotation",null],
   ["DB Floor Press","Tri Kickbacks",[28,28,28]],
   ["Bis: Bent Over Punches ×50","Box Jump Burpee",[15,12,12]],
   ["Bis: Incline DB Curl","Concentration Curls",[15,12,12],0,"curl"],
-  ["Bis: Hammer Curls","Cross-body Hammer Curls",[15,15,12],0,"hammer","hammer"]]},
+  ["Bis: Hammer Curls","Cross-body Hammer Curls",[15,15,12],0,"hammer","hammer"],
+  ["Tris: Cable Overhead Extension","DB Overhead Extension",null,0,"ohext","ohext"],
+  ["Bis: Cable Bicep Curl","DB Bicep Curl",null,0,"cablecurl","cablecurl"],
+  ["Reverse Curl (DB)","Cable Reverse Curl",[10,10,8],0,"revcurl","revcurl"]]},
  {id:"shoulders",name:"Shoulders",size:"Small",pc:"--p-shoulders",ex:[
   ["Full Raise, Slow Lower","Side Lat Raises (Side Grip)",[10,8,5]],
   ["Arnold Raises","Side Plank Lat Raise",[23,18,18]],
   ["Face Pulls (rope)","Band Face Pulls",null,0,"facepull","facepull"],
   ["External Rotation","F45 Push-ups Feet Raised",[10,10,10]],
   ["1 Arm Press Up","Alternating Shoulder Press",[23,18,18]],
-  ["Machine Shoulder Press","Scaption & Shrug",[63,57,52],1,"machpress","shoulders2"]]},
+  ["Machine Shoulder Press","Scaption & Shrug",[63,57,52],1,"machpress","shoulders2"],
+  ["Cable Crossover Lateral Raise","Single-arm Cable Lateral Raise",null,0,"cablelat","cablelat"],
+  ["Standing Cable Shoulder Press","Kneeling Cable Press",null,0,"cablepress","cablepress"]]},
  {id:"core",name:"Core",size:"Small",pc:"--p-core",ex:[
   ["15 Hip Hinge + 30 KB Swing","Horizontal Cable Chop",[18,18,15]],
   ["Decline Crunch + Twist ×12","Lying Reverse Crunch",null],
@@ -344,15 +370,20 @@ const GROUPS=[
   ["Farmer's Carry","Suitcase Carry (one hand)",[28,28,28],0,"farmer","farmer"],
   ["Pallof Press","Half-kneeling Pallof Press",null,0,"pallof","pallof"],
   ["Dead Bug","Bird Dog",null,0,"deadbug","deadbug"],
-  ["Copenhagen Side Plank","Short-lever Copenhagen (knee on bench)",null,0,"copenhagen","copenhagen"]]}
+  ["Copenhagen Side Plank","Short-lever Copenhagen (knee on bench)",null,0,"copenhagen","copenhagen"],
+  ["Cable Lateral Woodchop","High to Low Woodchop",null,0,"woodchop","woodchop"],
+  ["Cable Side Bend","DB Side Bend",null,0,"cablesidebend","cablesidebend"]]}
 ];
 const REPS={legs0:"3 × 12 each leg",legs3:"3 × 10 each leg",legs4:"3 × 15",rdl:"3 × 10",stepup:"3 × 10 each leg",pullup:"3 × max reps",
   back3:"3 × 12",arms0:"3 × 12",arms1:"3 × 12",arms3:"3 × 50 punches",arms4:"3 × 12",hammer:"3 × 12",facepull:"3 × 15",shoulders3:"3 × 12",
   core0:"3 × 15 + 30",core1:"3 × 12",core2:"3 × 12 each side",core3:"3 × 20",core4:"3 × 12",farmer:"3 × 40 m walk",pallof:"3 × 10 each side",
-  deadbug:"3 × 10 each side",copenhagen:"3 × 20s each side"};
-const DEFAULT_LINEUP={};
+  deadbug:"3 × 10 each side",copenhagen:"3 × 20s each side",
+  hipabd:"3 × 12 each leg",cablelegcurl:"3 × 12 each leg",cablexover:"3 × 12",cablefly:"3 × 12",altpress:"3 × 10 each arm",smithbench:"3 × 7 heavy",
+  reversefly:"3 × 15",cablerow1:"3 × 10 each arm",ohext:"3 × 12",cablecurl:"3 × 12",revcurl:"3 × 12",cablelat:"3 × 12 each arm",cablepress:"3 × 10",
+  woodchop:"3 × 10 each side",cablesidebend:"3 × 12 each side"};
+const DEFAULT_LINEUP={chest:["chest0","chest1","chest2","chest3","cablexover"]};
 const EXDEMO={legs0:"calf",legs1:"legext",legs2:"hamcurl",legs3:"bulgarian",legs4:"hipraise",chest0:"machbench",chest1:"dbpress",chest2:"dbfly",chest3:"inclpress",chest4:"inclfly",back0:"pulldown",back1:"row",back2:"csrow",back3:"shrug",back4:"cuban",arms0:"tripush",arms1:"dips",arms2:"floorpress",arms3:"punch",shoulders0:"fullraise",shoulders1:"arnold",shoulders2:"machpress",shoulders3:"extrot",shoulders4:"onepress",core0:"swing",core1:"crunch",core2:"sidebend",core3:"russian",core4:"hyper"};
-GROUPS.forEach(g=>g.ex=g.ex.map((e,i)=>{const id=e[5]||g.id+i;return {id,g:g.id,name:e[0],alt:e[1],base:e[2],heavy:!!e[3],demo:e[4]||EXDEMO[id]||null,cable:/cable|face pull/i.test(e[0])}}));
+GROUPS.forEach(g=>g.ex=g.ex.map((e,i)=>{const id=e[5]||g.id+i;return {id,g:g.id,name:e[0],alt:e[1],base:e[2],heavy:!!e[3],demo:e[4]||EXDEMO[id]||null,cable:/cable|face pull|smith/i.test(e[0])}}));
 GROUPS.forEach(g=>g.ex.forEach(e=>e.reps=REPS[e.id]||(e.heavy?"3 × 7 heavy":"3 × 10")));
 const MAIN=GROUPS;
 let LINEUP={};try{LINEUP=JSON.parse(localStorage.getItem("cw-lineup")||"{}")}catch(e){}
@@ -378,13 +409,13 @@ const REST=120;
 const days={};
 let cur=ymd(new Date());
 let db=null,col=null,mode="local",who="";
-const open=new Set(MAIN.map(g=>g.id));
+const open=new Set([...MAIN.map(g=>g.id),"order"]);
 try{JSON.parse(localStorage.getItem("cw-closed")||"[]").forEach(x=>open.delete(x));if(localStorage.getItem("cw-open-extra"))open.add("extra")}catch(e){}
 
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function parse(s){const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)}
 function norm(o){return {done:o.done||{},sets:o.sets||{},kg:o.kg||{},used:o.used||{},tech:o.tech||{},pick:o.pick||[],
-  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},fc:o.fc||{},wsel:o.wsel,swap:o.swap||{},finished:o.finished||"",fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{}}}
+  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},fc:o.fc||{},order:o.order||[],wsel:o.wsel,swap:o.swap||{},finished:o.finished||"",fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{}}}
 function day(k){return days[k]||(days[k]=norm({}))}
 const has=v=>v!==""&&v!=null;
 function lastKg(exId,beforeKey){
@@ -397,8 +428,10 @@ function mobDay(d){return Object.keys(d.mob||{}).length||Object.keys(d.mobH||{})
 
 // which groups and exercises show today
 function fullIndex(){return Object.keys(days).filter(k=>k<cur&&days[k].pick&&days[k].pick.includes("full")).length%5}
+function orderEx(){return (day(cur).order||[]).map(id=>ALLEX.find(e=>e.id===id)).filter(Boolean)}
 function plan(){
-  const pick=day(cur).pick;
+  const pick=day(cur).pick,ord=orderEx();
+  if(ord.length)return {mode:"order",groups:[{g:{id:"order",name:"Today's running order",size:"",pc:"--fg"},ex:ord}]};
   if(!pick.length)return {mode:"all",groups:MAIN.map(g=>({g,ex:lineup(g)}))};
   if(pick.includes("full")){const i=fullIndex(),sw=day(cur).swap;return {mode:"full",groups:MAIN.map(g=>{const L=lineup(g);return {g,ex:[L[sw[g.id]!==undefined?sw[g.id]%L.length:i]]}})}}
   return {mode:"pick",groups:MAIN.filter(g=>pick.includes(g.id)).map(g=>({g,ex:lineup(g)}))};
@@ -443,6 +476,20 @@ function renderDate(){
   $("ddate").textContent=d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"});
   $("tod").hidden=cur===t;
 }
+let building=false;
+function estMin(list){return Math.round(list.reduce((a,e)=>a+3*(45+REST)/60+0.5,0))}
+function lastOrder(){const k=Object.keys(days).filter(k=>k<cur&&days[k].order&&days[k].order.length).sort().pop();return k?days[k].order:null}
+function renderBuilder(){
+  const d=day(cur),b=$("builder");b.hidden=!building;if(!building)return;
+  const sel=orderEx(),last=lastOrder();
+  b.innerHTML=`<h3>Build today's running order</h3>
+    <p>Tap exercises to add them in the order you'll do them. Use the arrows to move them. ${sel.length?`<b>${sel.length} exercises, about ${estMin(sel)} min</b> with 2 minute rests.`:""}</p>
+    ${sel.length?`<ol class="olist">${sel.map((e,i)=>`<li style="--pc:var(${GROUPS.find(g=>g.id===e.g).pc})"><span class="plate"></span><span class="oname">${esc(e.name)} <small>${esc(e.reps)}</small></span>
+      <button data-oup="${e.id}" aria-label="Move up" ${i===0?"disabled":""}>↑</button><button data-odown="${e.id}" aria-label="Move down" ${i===sel.length-1?"disabled":""}>↓</button><button data-odel="${e.id}" aria-label="Remove">✕</button></li>`).join("")}</ol>`:""}
+    <div class="sumbtns"><button class="go" id="odone">${sel.length?"Done, show my session":"Done"}</button>${last&&!sel.length?`<button id="olast">Copy last session</button>`:""}${sel.length?`<button id="oclear">Clear</button>`:""}</div>
+    ${GROUPS.map(g=>`<div class="ogroup"><h4 style="color:var(${g.pc})">${g.name}</h4><div class="chips">${g.ex.map(e=>`<button class="chip ${d.order.includes(e.id)?"on":""}" data-oadd="${e.id}">${esc(e.name)} <small>${esc(e.reps)}</small></button>`).join("")}</div></div>`).join("")}`;
+}
+function d0order(){return (day(cur).order||[]).length}
 function renderPick(){
   const pick=day(cur).pick;
   const gchip=g=>`<button class="pchip ${pick.includes(g.id)?"on":""}" data-pick="${g.id}" style="--pc:var(${g.pc})" aria-pressed="${pick.includes(g.id)}"><span class="plate"></span>${g.name}<small>${g.size}</small></button>`;
@@ -451,7 +498,10 @@ function renderPick(){
   const same=pick.length===2&&s.ids.every(i=>pick.includes(i));
   $("suggest").innerHTML=same?`<span>On track: <b>${nm(s.ids[0])} + ${nm(s.ids[1])}</b> were the most overdue.</span>`
     :`<span>Most overdue: <b>${nm(s.ids[0])}</b> (${ago(s.ago[0])}) + <b>${nm(s.ids[1])}</b> (${ago(s.ago[1])})</span><button data-usesug="1">Use</button>`;
-  $("showall").hidden=!pick.length;
+  $("showall").hidden=!pick.length&&!d0order();
+  const ord=orderEx();
+  $("orderbox").innerHTML=ord.length?`<div class="suggest"><span>Running order: <b>${ord.length} exercises</b>, about ${estMin(ord)} min</span><button id="build">Edit</button></div>`
+    :`<button class="linkbtn" id="build">Or build my own running order</button>`;
   const p=plan();
   if(p.mode==="full")$("suggest").insertAdjacentHTML("beforeend",`<span style="flex-basis:100%">Full body: exercise ${fullIndex()+1} of 5 from each group. Next full body day rotates to the next one.</span>`);
 }
@@ -563,11 +613,11 @@ function renderGroups(){
     const n=ex.filter(e=>exDone(d,e)).length;
     return `<section class="card group ${open.has(g.id)?"":"closed"}" id="g-${g.id}" style="--pc:var(${g.pc})">
       <button class="ghead" data-toggle="${g.id}" aria-expanded="${open.has(g.id)}">
-        <h2>${g.name}</h2><span class="tag">${g.extra?"Add one if you want":g.size}${g.sub?" · "+g.sub:""}</span>
+        <h2>${g.name}</h2><span class="tag">${g.id==="order"?"~"+estMin(ex)+" min":g.size}${g.sub?" · "+g.sub:""}</span>
         <span class="count ${n===ex.length?"full":""}">${n}/${ex.length}</span><span class="chev">▾</span></button>
       ${p.mode==="full"?`<div class="swaprow"><button class="swapbtn" data-swap="${g.id}">⇄ Swap for a different ${g.name.toLowerCase()} exercise</button></div>`:""}
-      <ul class="exlist">${ex.map(e=>exHtml(e,d)).join("")}</ul>
-      ${g.id==="core"&&p.mode!=="full"?`<div class="cx"><h4>Core extras</h4><div class="chips">${chipList(CX,"cx")}</div></div>`:""}
+      <ul class="exlist ${p.mode==="order"?"numbered":""}">${ex.map(e=>exHtml(e,d)).join("")}</ul>
+      ${g.id==="core"&&p.mode!=="full"&&p.mode!=="order"?`<div class="cx"><h4>Core extras</h4><div class="chips">${chipList(CX,"cx")}</div></div>`:""}
     </section>`}).join("");
 }
 function exHtml(e,d){
@@ -590,7 +640,7 @@ function exHtml(e,d){
       </div>
       <div class="rowbtns">${e.demo?`<button class="rowplay" data-demo="${e.demo}" aria-label="Watch ${esc(e.name)} demo">▶</button>`:""}<button class="rowplay swapx" data-swapbtn="${e.id}" aria-label="Swap ${esc(e.name)} for another exercise">⇄</button></div>
     </div>
-    <div class="swapopts" id="so-${e.id}" hidden><h4>Swap for</h4><div class="chips">${GROUPS.find(g=>g.id===e.g).ex.filter(o=>!lineup(GROUPS.find(g=>g.id===e.g)).includes(o)).map(o=>`<button class="chip" data-swapfrom="${e.id}" data-swapto="${o.id}">${esc(o.name)} <small>${esc(o.reps)}</small></button>`).join("")}</div></div>
+    <div class="swapopts" id="so-${e.id}" hidden><h4>Swap for</h4><div class="chips">${GROUPS.find(g=>g.id===e.g).ex.filter(o=>plan().mode==="order"?!(d.order||[]).includes(o.id):!lineup(GROUPS.find(g=>g.id===e.g)).includes(o)).map(o=>`<button class="chip" data-swapfrom="${e.id}" data-swapto="${o.id}">${esc(o.name)} <small>${esc(o.reps)}</small></button>`).join("")}</div></div>
     <div class="setrow">${[0,1,2].map(i=>`<button class="set ${sets[i]?"on":""}" data-set="${e.id}" data-i="${i}" aria-pressed="${!!sets[i]}">Set ${i+1}</button>`).join("")}</div>
     <div class="log">
       <div class="sets">${[0,1,2].map(i=>`<label for="kg-${e.id}-${i}">Set ${i+1} kg<input id="kg-${e.id}-${i}" inputmode="decimal" data-kg="${e.id}" data-i="${i}" value="${esc(vals[i]??"")}" placeholder="${esc(ph[i]??"")}"></label>`).join("")}</div>
@@ -621,7 +671,7 @@ function renderDone(){
 }
 function renderAll(){renderDate();renderPick();renderWeek();
   $("ws").innerHTML=WS.map((w,i)=>`<button class="chip ${day(cur).ws[i]?"on":""}" data-chip="ws" data-id="${i}">${w[0]} <small>${w[1]}</small></button>`).join("");
-  renderWarm();renderFin();renderFC();renderGroups();renderDone();wsIdle()}
+  renderWarm();renderFin();renderFC();renderGroups();renderDone();renderBuilder();wsIdle()}
 function rerenderEx(id){
   const e=ALLEX.find(x=>x.id===id),li=$("ex-"+id);if(!li)return;const wasOpen=li.classList.contains("open");
   li.outerHTML=exHtml(e,day(cur));if(wasOpen)$("ex-"+id).classList.add("open");
@@ -735,6 +785,7 @@ document.addEventListener("click",ev=>{
     if(id==="full")p=p.includes("full")?[]:["full"];else{p=p.filter(x=>x!=="full");p=p.includes(id)?p.filter(x=>x!==id):[...p,id]}
     d.pick=p;save(cur);renderAll();return}
   if(t.dataset.swapbtn){const so=$("so-"+t.dataset.swapbtn);if(so)so.hidden=!so.hidden;return}
+  if(t.dataset.swapto&&plan().mode==="order"){const i=d.order.indexOf(t.dataset.swapfrom);if(i>=0)d.order[i]=t.dataset.swapto;save(cur);renderGroups();renderPick();return}
   if(t.dataset.swapto){const from=t.dataset.swapfrom,to=t.dataset.swapto,e=ALLEX.find(x=>x.id===from),g=GROUPS.find(x=>x.id===e.g);
     const ids=lineup(g).map(x=>x.id);ids[ids.indexOf(from)]=to;setLineup(g.id,ids);renderGroups();return}
   if(t.dataset.swap){const g=t.dataset.swap,cur0=plan().groups.find(x=>x.g.id===g).ex[0],idx=lineup(GROUPS.find(x=>x.id===g)).indexOf(cur0);
@@ -756,7 +807,15 @@ document.addEventListener("click",ev=>{
     t.classList.remove("armed");t.textContent="Reset today";if(guide)stopGuide();stopRest();if(fcT)fcStop();if(wsPhase!=="idle")wsStop();choosing=false;
     days[cur]=norm({});save(cur);renderAll();setStatus("Today cleared");return}
   if(t.dataset.usesug){d.pick=suggestion().ids;save(cur);renderAll();return}
-  if(t.id==="showall"){d.pick=[];save(cur);renderAll();return}
+  if(t.id==="showall"){d.pick=[];d.order=[];save(cur);renderAll();return}
+  if(t.id==="build"){building=true;if(!d.order.length){const last=lastOrder();if(last)d.order=last.slice()}renderBuilder();$("builder").scrollIntoView({block:"start",behavior:"smooth"});return}
+  if(t.dataset.oadd){const id=t.dataset.oadd;d.order=d.order.includes(id)?d.order.filter(x=>x!==id):[...d.order,id];save(cur);renderBuilder();return}
+  if(t.dataset.oup||t.dataset.odown){const id=t.dataset.oup||t.dataset.odown,i=d.order.indexOf(id),j=t.dataset.oup?i-1:i+1;
+    if(i>=0&&j>=0&&j<d.order.length){[d.order[i],d.order[j]]=[d.order[j],d.order[i]];save(cur)}renderBuilder();return}
+  if(t.dataset.odel){d.order=d.order.filter(x=>x!==t.dataset.odel);save(cur);renderBuilder();return}
+  if(t.id==="oclear"){d.order=[];save(cur);renderBuilder();return}
+  if(t.id==="olast"){const last=lastOrder();if(last){d.order=last.slice();save(cur)}renderBuilder();return}
+  if(t.id==="odone"){building=false;$("builder").hidden=true;renderAll();$("groups").scrollIntoView({block:"start",behavior:"smooth"});return}
   if(t.dataset.tech){const id=t.dataset.tech;d.tech[id]=d.tech[id]===t.dataset.v?undefined:t.dataset.v;if(!d.tech[id])delete d.tech[id];save(cur);rerenderEx(id);return}
   if(t.id==="fcgo"){fcT?fcStop():fcStart();return}
   if(t.id==="wsgo"){wsPhase==="idle"?wsStart():wsStop();return}
@@ -1333,6 +1392,70 @@ DEMOS.intervals={name:"4 × 4 Hill Intervals",cue:"Treadmill on a steep incline.
   fig(x,{H:[105+lean,34+bob],N:[103+lean,46+bob],P:[100,90+bob],eA,hA,eB,hB,kA,fA,kB,fB},{mouth:hard?"oh":"smile"});
   txt(x,hard?"HARD 4:00":"EASY 3:00",DW-8,40,{mono:1,size:13,col:hard?C.rust:C.good,align:"right"});
   txt(x,"4 rounds",DW-8,18,{mono:1,size:11,col:C.rust,align:"right"})}};
+
+// ---- cable tower demos ----
+PR.tower=(x,px,top=8)=>{x.strokeStyle=C.muted;x.lineWidth=3;x.beginPath();x.moveTo(px,G);x.lineTo(px,top);x.stroke();x.lineWidth=1.2;x.beginPath();x.moveTo(px+(px<100?6:-6),G);x.lineTo(px+(px<100?6:-6),top);x.stroke()};
+PR.towers=(x,top=8)=>{PR.tower(x,30,top);PR.tower(x,170,top);x.strokeStyle=C.muted;x.lineWidth=3;x.beginPath();x.moveTo(30,top);x.lineTo(170,top);x.stroke()};
+const handle=(x,p)=>{dot(x,p,3,C.ink)};
+const cab=(x,from,to)=>{PR.cable(x,to,from);handle(x,to)};
+{const S={N:[100,52],P:[100,94],...FL};
+ const A=mkF({...S,eA:[72,52],hA:[50,40],eB:[128,52],hB:[150,40]}),B=mkF({...S,eA:[88,76],hA:[104,90],eB:[112,76],hB:[96,90]});
+ D("cablexover","Cable Crossover","3 × 12","Pulleys up high, step forward, slight bend in the elbows. Sweep the handles down and across until your hands cross in front of your hips, squeeze the chest, then let them back up slowly.",[A,B],
+  {bg:x=>PR.towers(x),fg:(x,p)=>{cab(x,[36,22],p.hA);cab(x,[164,22],p.hB)}});}
+{const S={N:[100,52],P:[100,94],...FL};
+ const A=mkF({...S,eA:[70,60],hA:[46,58],eB:[130,60],hB:[154,58]}),B=mkF({...S,eA:[90,64],hA:[98,60],eB:[110,64],hB:[102,60]});
+ D("cablefly","Cable Chest Fly","3 × 12","Pulleys at chest height, one step forward. Arms wide with soft elbows, hug the handles together in front of your chest, slow on the way back.",[A,B],
+  {bg:x=>PR.towers(x),fg:(x,p)=>{cab(x,[36,58],p.hA);cab(x,[164,58],p.hB)}});}
+{const L={N:[106,52],P:[100,94],kA:[88,122],fA:[76,150],k:[114,122],f:[124,150]};
+ const A=mk({...L,e:[124,60],h:[146,58],eA:[100,66],hA:[110,60]}),B=mk({...L,e:[104,66],h:[114,60],eA:[124,60],hA:[146,58]});
+ D("altpress","Alternating Cable Chest Press","3 × 10 each arm","Back to the tower, split stance, handles at chest height. Punch one hand straight forward while the other comes back, then switch. Keep the hips square.",[A,B],
+  {reps:4,bg:x=>PR.tower(x,26),fg:(x,p)=>{cab(x,[30,58],p.hB);cab(x,[30,60],p.hA)}});}
+{const L1={N:[134,112],P:[88,114],H:[148,106],k:[66,118],f:[60,150]};
+ const A=mk({...L1,e:[122,122],h:[126,100]}),B=mk({...L1,e:[126,96],h:[128,74]});
+ D("smithbench","Smith Bench Press","3 × 7 heavy","Bench under the bar so it lowers to mid-chest. Unhook with a twist, lower under control, press up. Twist to rack it at the end.",[A,B],
+  {bg:x=>{PR.bench(x,70,152,118);x.strokeStyle=C.muted;x.lineWidth=2;[120,136].forEach(px=>{x.beginPath();x.moveTo(px,8);x.lineTo(px,G);x.stroke()})},
+   fg:(x,p)=>{PR.bar(x,p.hB,18);x.fillStyle=C.ink;x.fillRect(p.hB[0]-24,p.hB[1]-7,5,14);x.fillRect(p.hB[0]+19,p.hB[1]-7,5,14)}});}
+{const S={N:[100,52],P:[100,94],...FL};
+ const A=mkF({...S,eA:[104,60],hA:[114,58],eB:[96,60],hB:[86,58]}),B=mkF({...S,eA:[74,56],hA:[50,56],eB:[126,56],hB:[150,56]});
+ D("reversefly","Cable Reverse Fly","3 × 15","Pulleys at shoulder height, cables crossed: left hand holds the right cable. Pull the arms out wide into a T, squeezing between the shoulder blades.",[A,B],
+  {bg:x=>PR.towers(x),fg:(x,p)=>{cab(x,[164,56],p.hA);cab(x,[36,56],p.hB)}});}
+{const L={N:[104,56],P:[96,96],H:[106,44],kA:[86,122],fA:[78,150],k:[110,122],f:[118,150]};
+ const A=mk({...L,e:[128,80],h:[150,82],eA:[100,76],hA:[106,92]}),B=mk({...L,e:[82,74],h:[104,80],eA:[100,76],hA:[106,92]});
+ D("cablerow1","Single-arm Cable Row","3 × 10 each arm","Pulley at waist height, split stance. Row the handle to your hip, elbow close to the body, squeeze the back, then reach forward.",[A,B],
+  {bg:x=>PR.tower(x,174),fg:(x,p)=>cab(x,[170,82],p.hB)});}
+{const S={N:[100,52],P:[100,94],...FL};
+ const A=mkF({...S,eA:[96,78],hA:[108,96],eB:[104,78],hB:[92,96]}),B=mkF({...S,eA:[72,58],hA:[50,56],eB:[128,58],hB:[150,56]});
+ D("cablelat","Cable Crossover Lateral Raise","3 × 12","Pulleys at the bottom, cables crossed in front of you. Raise the arms out to the sides to shoulder height, slight bend in the elbows, slow on the way down.",[A,B],
+  {bg:x=>PR.towers(x),fg:(x,p)=>{cab(x,[164,142],p.hA);cab(x,[36,142],p.hB)}});}
+{const S={N:[100,52],P:[100,94],...FL};
+ const A=mkF({...S,eA:[78,74],hA:[80,54],eB:[122,74],hB:[120,54]}),B=mkF({...S,eA:[86,34],hA:[90,14],eB:[114,34],hB:[110,14]});
+ D("cablepress","Standing Cable Shoulder Press","3 × 10","Pulleys at the bottom, stand between them. Handles at shoulder height, press straight up overhead, brace the core and don't lean back.",[A,B],
+  {bg:x=>PR.towers(x),fg:(x,p)=>{cab(x,[36,142],p.hA);cab(x,[164,142],p.hB)}});}
+{const L={N:[110,54],P:[100,94],H:[114,42],kA:[88,122],fA:[78,150],k:[114,122],f:[124,150]};
+ const A=mk({...L,e:[116,30],h:[98,40]}),B=mk({...L,e:[128,38],h:[148,30]});
+ D("ohext","Cable Overhead Tricep Extension","3 × 12","Rope from the high pulley, face away, lean forward in a split stance. Elbows by your ears, straighten the arms forward and up, then let the rope back behind your head.",[A,B],
+  {bg:x=>PR.tower(x,26),fg:(x,p)=>{cab(x,[30,26],p.hB);PR.band(x,[p.hB[0]-3,p.hB[1]-5],[p.hB[0]+3,p.hB[1]+5])}});}
+{const A=mk({N:[100,50],P:[100,92],e:[103,70],h:[110,92],k:[102,120],f:[105,150]}),B=mk({N:[100,50],P:[100,92],e:[103,70],h:[112,52],k:[102,120],f:[105,150]});
+ D("cablecurl","Cable Bicep Curl","3 × 12","Facing the low pulley, elbows pinned at your sides. Curl the bar up, squeeze, lower slowly. The cable keeps tension all the way down.",[A,B],
+  {bg:x=>PR.tower(x,174),fg:(x,p)=>{cab(x,[170,144],p.hB);PR.bar(x,p.hB,6)}});}
+{const A=mk({N:[100,50],P:[100,92],e:[103,70],h:[104,92],k:[102,120],f:[105,150]}),B=mk({N:[100,50],P:[100,92],e:[103,70],h:[114,52],k:[102,120],f:[105,150]});
+ D("revcurl","Reverse Curl","3 × 12","Overhand grip, knuckles up. Curl the dumbbells with elbows pinned, lower slowly. Works the forearms and grip.",[A,B],{fg:(x,p)=>PR.db(x,p.hB,0)});}
+{const S={N:[100,52],P:[100,94],...FL};
+ const A=mkF({...S,eA:[78,44],hA:[62,34],eB:[82,48],hB:[66,36]}),B=mkF({...S,N:[104,54],eA:[112,82],hA:[126,98],eB:[116,80],hB:[130,96]});
+ D("woodchop","Cable Lateral Woodchop","3 × 10 each side","Pulley high, side-on to the tower. Pull the handle down and across your body to the opposite hip, turning through the hips and core, arms long.",[A,B],
+  {bg:x=>PR.tower(x,26),fg:(x,p)=>cab(x,[30,24],[(p.hA[0]+p.hB[0])/2,(p.hA[1]+p.hB[1])/2])});}
+{const L2={kA:[90,121],fA:[86,150],kB:[110,121],fB:[114,150]};
+ const A=mkF({N:[100,50],P:[100,92],...L2,eA:[86,72],hA:[84,92],eB:[114,72],hB:[116,92]}),B=mkF({N:[90,54],P:[100,92],H:[86,43],...L2,eA:[78,76],hA:[76,98],eB:[104,70],hB:[110,88]});
+ D("cablesidebend","Cable Side Bend","3 × 12 each side","Low pulley beside you, handle in the near hand. Bend away from the tower, then pull yourself back upright with the obliques.",[A,B],
+  {bg:x=>PR.tower(x,172),fg:(x,p)=>cab(x,[168,144],p.hB)});}
+{const S={N:[100,50],P:[100,92],eA:[78,64],hA:[56,66],eB:[112,72],hB:[106,90],kA:[93,121],fA:[91,150]};
+ const A=mkF({...S,kB:[108,121],fB:[110,150]}),B=mkF({...S,kB:[118,118],fB:[138,138]});
+ D("hipabd","Cable Hip Abduction","3 × 12 each leg","Ankle strap on the outside leg, low pulley, hold the tower. Lift the leg out to the side with the toes pointing forward, slow back in. Keep the body upright.",[A,B],
+  {bg:x=>PR.tower(x,30),fg:(x,p)=>cab(x,[34,146],p.fB)});}
+{const S={N:[104,50],P:[100,92],e:[126,66],h:[150,64],kA:[100,121],fA:[100,150]};
+ const A=mk({...S,k:[102,121],f:[104,150]}),B=mk({...S,k:[102,122],f:[80,104]});
+ D("cablelegcurl","Standing Cable Leg Curl","3 × 12 each leg","Ankle strap, low pulley, face the tower and hold on. Curl the heel up towards your bum, knee pointing down, then lower slowly.",[A,B],
+  {bg:x=>PR.tower(x,172),fg:(x,p)=>cab(x,[168,146],p.fB)});}
 
 let demoId=null,demoRAF=0,demoStart=0;
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
