@@ -165,6 +165,8 @@ header{flex-direction:row!important;justify-content:space-between;align-items:fl
 .go:disabled{opacity:.4}
 
 .fin{border-top:5px solid var(--done)}
+.fc{border-top:5px solid var(--p-core)}
+.timer.carry .clock{color:var(--p-core)}
 .startwu{width:100%;padding:13px;font-size:1rem}
 .chip.pickme.on::before{content:"✓ "}
 .guide{display:flex;flex-direction:column;gap:8px}
@@ -247,6 +249,18 @@ header{flex-direction:row!important;justify-content:space-between;align-items:fl
   </div>
 
   <div id="groups" style="display:flex;flex-direction:column;gap:14px"></div>
+
+  <div class="card extra fc" id="fccard">
+    <h3>Farmer's carry: every day</h3>
+    <p>Heaviest dumbbells you can hold for 90 seconds. Stand tall, shoulders back and down, short quick steps, and don't let them swing. Laps of the gym are fine.</p>
+    <div class="timer" id="fctimer">
+      <div class="clock" id="fcclock" aria-live="polite">1:30</div>
+      <div class="phase" id="fcphase">Ready</div>
+      <button class="go" id="fcgo">Start 90s</button>
+    </div>
+    <div class="z2row"><label for="fckg">kg per hand <input id="fckg" inputmode="decimal" placeholder="28"></label><span class="bw" id="fcnote"></span></div>
+    <button class="linkbtn" data-demo="farmer">▶ Watch Xander do it</button>
+  </div>
 
   <div class="card extra fin" id="fincard">
     <h3>Finisher</h3>
@@ -361,7 +375,7 @@ const REPS={legs0:"3 × 12 each leg",legs3:"3 × 10 each leg",legs4:"3 × 15",rd
   back3:"3 × 12",arms0:"3 × 12",arms1:"3 × 12",arms3:"3 × 50 punches",arms4:"3 × 12",hammer:"3 × 12",facepull:"3 × 15",shoulders3:"3 × 12",
   core0:"3 × 15 + 30",core1:"3 × 12",core2:"3 × 12 each side",core3:"3 × 20",core4:"3 × 12",farmer:"3 × 40 m walk",pallof:"3 × 10 each side",
   deadbug:"3 × 10 each side",copenhagen:"3 × 20s each side"};
-const DEFAULT_LINEUP={core:["core0","core1","farmer","core3","core4"]};
+const DEFAULT_LINEUP={};
 const EXDEMO={legs0:"calf",legs1:"legext",legs2:"hamcurl",legs3:"bulgarian",legs4:"hipraise",chest0:"machbench",chest1:"dbpress",chest2:"dbfly",chest3:"inclpress",chest4:"inclfly",back0:"pulldown",back1:"row",back2:"csrow",back3:"shrug",back4:"cuban",arms0:"tripush",arms1:"dips",arms2:"floorpress",arms3:"punch",shoulders0:"fullraise",shoulders1:"arnold",shoulders2:"machpress",shoulders3:"extrot",shoulders4:"onepress",core0:"swing",core1:"crunch",core2:"sidebend",core3:"russian",core4:"hyper"};
 GROUPS.forEach(g=>g.ex=g.ex.map((e,i)=>{const id=e[5]||g.id+i;return {id,g:g.id,name:e[0],alt:e[1],base:e[2],heavy:!!e[3],demo:e[4]||EXDEMO[id]||null,cable:/cable|face pull/i.test(e[0])}}));
 GROUPS.forEach(g=>g.ex.forEach(e=>e.reps=REPS[e.id]||(e.heavy?"3 × 7 heavy":"3 × 10")));
@@ -395,7 +409,7 @@ try{JSON.parse(localStorage.getItem("cw-closed")||"[]").forEach(x=>open.delete(x
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function parse(s){const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)}
 function norm(o){return {done:o.done||{},sets:o.sets||{},kg:o.kg||{},used:o.used||{},tech:o.tech||{},pick:o.pick||[],
-  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},wsel:o.wsel,swap:o.swap||{},finished:o.finished||"",fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{}}}
+  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},fc:o.fc||{},wsel:o.wsel,swap:o.swap||{},finished:o.finished||"",fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{}}}
 function day(k){return days[k]||(days[k]=norm({}))}
 const has=v=>v!==""&&v!=null;
 function lastKg(exId,beforeKey){
@@ -482,7 +496,8 @@ function renderWeek(){
   const mob=wk.filter(k=>days[k]&&mobDay(days[k])).length;
   const ws=wk.filter(k=>days[k]&&Object.keys(days[k].ws||{}).length>=WS.length).length;
   const hips=wk.map(k=>days[k]&&days[k].hip).filter(Boolean);
-  $("weekline").innerHTML=`<span>Wall sits <b>${ws}</b>/7</span><span>Weights days <b>${lift}</b></span><span>Zone 2 walks <b>${z2.length}</b>${z2.length?` · <b>${mins}</b> min`:""}</span><span>Mobility days <b>${mob}</b></span>${hips.length?`<span>Left hip <b>${hips.join(", ")}</b> /5</span>`:""}`;
+  const fcd=wk.filter(k=>days[k]&&days[k].fc&&days[k].fc.done).length;
+  $("weekline").innerHTML=`<span>Wall sits <b>${ws}</b>/7</span><span>Carries <b>${fcd}</b>/7</span><span>Weights days <b>${lift}</b></span><span>Zone 2 walks <b>${z2.length}</b>${z2.length?` · <b>${mins}</b> min`:""}</span><span>Mobility days <b>${mob}</b></span>${hips.length?`<span>Left hip <b>${hips.join(", ")}</b> /5</span>`:""}`;
 }
 function chipList(list,key,store){
   const d=day(cur);
@@ -615,6 +630,7 @@ function summaryLines(){
   let sets=0;ALLEX.forEach(e=>{if(d.sets[e.id])sets+=d.sets[e.id].filter(Boolean).length});if(sets)lines.push(sets+(sets===1?" set":" sets")+" ticked");
   ALLEX.forEach(e=>{const k=d.kg[e.id];if(k&&k.some(has)&&(d.done[e.id]||d.sets[e.id])){const nm=d.used[e.id]==="alt"&&e.alt?e.alt:e.name;lines.push(nm+": "+k.filter(has).join(" / ")+" kg")}});
   const ws=Object.keys(d.ws).length;if(ws)lines.push("Wall sits: "+ws+" of "+WS.length);
+  if(d.fc.done)lines.push("Farmer's carry: "+(d.fc.n||1)+" × 90s"+(d.fc.kg?" at "+d.fc.kg+" kg per hand":""));
   if(d.z2.done)lines.push("Zone 2: "+(d.z2.min||30)+" min "+(d.z2.where===1?"up Bukit Timah Hill":d.z2.where===2?"of 4 × 4 hill intervals":"on the treadmill")+(d.z2.where!==1&&d.z2.inc?" at "+d.z2.inc+"%":""));
   if(d.hip)lines.push("Left hip in pigeon: "+d.hip+"/5");
   return lines;
@@ -630,7 +646,7 @@ function renderDone(){
 }
 function renderAll(){renderDate();renderPick();renderWeek();
   $("ws").innerHTML=WS.map((w,i)=>`<button class="chip ${day(cur).ws[i]?"on":""}" data-chip="ws" data-id="${i}">${w[0]} <small>${w[1]}</small></button>`).join("");
-  renderWarm();renderFin();renderGroups();renderDone();wsIdle()}
+  renderWarm();renderFin();renderFC();renderGroups();renderDone();wsIdle()}
 function rerenderEx(id){
   const e=ALLEX.find(x=>x.id===id),li=$("ex-"+id);if(!li)return;const wasOpen=li.classList.contains("open");
   li.outerHTML=exHtml(e,day(cur));if(wasOpen)$("ex-"+id).classList.add("open");
@@ -676,6 +692,22 @@ function restTick(){
   if(wsPhase==="idle")keepAwake(false);
 }
 function stopRest(){clearInterval(restT);restT=null;$("rest").hidden=true;$("rskip").textContent="Skip";if(wsPhase==="idle")keepAwake(false)}
+
+// ===================== farmer's carry timer =====================
+const FCSECS=90;let fcT=null,fcEnd=0,fcBeep=0;
+function fcLastKg(){const k=Object.keys(days).filter(k=>k<cur&&days[k].fc&&days[k].fc.kg).sort().pop();return k?days[k].fc.kg:"28"}
+function renderFC(){
+  const f=day(cur).fc,n=f.n||0;$("fccard").classList.toggle("isdone",!!f.done);
+  if(!fcT){$("fctimer").className="timer";$("fcclock").textContent=fmt(FCSECS);$("fcphase").textContent=n?`Done ×${n} today`:"Ready";$("fcgo").textContent=n?"Go again":"Start 90s"}
+  $("fckg").placeholder=fcLastKg();if(document.activeElement!==$("fckg"))$("fckg").value=f.kg||"";
+  $("fcnote").textContent=n?"":"Last: "+fcLastKg()+" kg";
+}
+function fcStart(){fcEnd=Date.now()+FCSECS*1000;fcBeep=0;$("fctimer").className="timer carry";$("fcphase").textContent="Walk tall";$("fcgo").textContent="Stop";
+  clearInterval(fcT);fcT=setInterval(fcTick,250);fcTick();keepAwake(true)}
+function fcStop(){clearInterval(fcT);fcT=null;if(!restT&&wsPhase==="idle")keepAwake(false);renderFC()}
+function fcTick(){const left=Math.max(0,Math.ceil((fcEnd-Date.now())/1000));$("fcclock").textContent=fmt(left);
+  if(left>0&&left<=3&&left!==fcBeep){fcBeep=left;blip()}
+  if(left>0)return;softTone();const d=day(cur),f=d.fc;f.n=(f.n||0)+1;f.done=true;if(!f.kg)f.kg=$("fckg").value||fcLastKg();save(cur);fcStop();renderWeek()}
 
 // ===================== wall sit timer =====================
 let wsT=null,wsEnd=0,wsPhase="idle",wsSet=0,wsBeep=0;
@@ -746,11 +778,12 @@ document.addEventListener("click",ev=>{
   if(t.id==="gstop"){stopGuide();return}
   if(t.id==="reset"){
     if(!t.classList.contains("armed")){t.classList.add("armed");t.textContent="Tap again to clear today";setTimeout(()=>{t.classList.remove("armed");t.textContent="Reset today"},3000);return}
-    t.classList.remove("armed");t.textContent="Reset today";if(guide)stopGuide();stopRest();if(wsPhase!=="idle")wsStop();choosing=false;
+    t.classList.remove("armed");t.textContent="Reset today";if(guide)stopGuide();stopRest();if(fcT)fcStop();if(wsPhase!=="idle")wsStop();choosing=false;
     days[cur]=norm({});save(cur);renderAll();setStatus("Today cleared");return}
   if(t.dataset.usesug){d.pick=suggestion().ids;save(cur);renderAll();return}
   if(t.id==="showall"){d.pick=[];save(cur);renderAll();return}
   if(t.dataset.tech){const id=t.dataset.tech;d.tech[id]=d.tech[id]===t.dataset.v?undefined:t.dataset.v;if(!d.tech[id])delete d.tech[id];save(cur);rerenderEx(id);return}
+  if(t.id==="fcgo"){fcT?fcStop():fcStart();return}
   if(t.id==="wsgo"){wsPhase==="idle"?wsStart():wsStop();return}
   if(t.id==="z2tick"){d.z2.done=!d.z2.done;if(d.z2.done&&d.z2.where===undefined)d.z2.where=0;save(cur);renderFin();renderWeek();return}
   if(t.dataset.z2w){d.z2.where=+t.dataset.z2w;save(cur);renderFin();return}
@@ -769,6 +802,7 @@ $("sheet").addEventListener("click",e=>{if(e.target===$("sheet"))closeDemo()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet").hidden)closeDemo()});
 document.addEventListener("input",ev=>{
   const t=ev.target,d=day(cur);
+  if(t.id==="fckg"){d.fc.kg=t.value.trim();save(cur);return}
   if(t.id==="z2min"||t.id==="z2inc"){d.z2[t.id==="z2min"?"min":"inc"]=t.value.trim();if(t.value.trim()){d.z2.done=true;if(d.z2.where===undefined)d.z2.where=0}
     $("fincard").classList.toggle("isdone",!!d.z2.done);save(cur);renderWeek();return}
   if(!t.dataset.kg)return;
@@ -777,7 +811,7 @@ document.addEventListener("input",ev=>{
   save(cur);
 });
 document.addEventListener("focusout",ev=>{const id=ev.target.dataset&&ev.target.dataset.kg;if(id)setTimeout(()=>{const a=document.activeElement;if(!a||!a.dataset||a.dataset.kg!==id)rerenderEx(id)},50)});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden){if(restT)restTick();if(wsT)wsTick()}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){if(restT)restTick();if(wsT)wsTick();if(fcT)fcTick()}});
 
 // ===================== Xander demos =====================
 const DW=220,DH=170,G=150;
