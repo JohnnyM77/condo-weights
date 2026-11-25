@@ -178,6 +178,22 @@ header{flex-direction:row!important;justify-content:space-between;align-items:fl
 .fin{border-top:5px solid var(--done)}
 .fc{border-top:5px solid var(--p-core)}
 .timer.carry .clock{color:var(--p-core)}
+.daily{border-top:5px solid var(--accent)}
+.drows{display:flex;flex-direction:column;gap:8px}
+.drow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.92rem;cursor:pointer}
+.drow .dtick{flex:none;width:20px;color:var(--done);font-weight:700;text-align:center}
+.drow .dname{flex:1;font-weight:600}
+.drow .dstat{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+.drow.on{border-color:var(--done);background:var(--done-bg)}
+.lbm{border-top:5px solid var(--p-back)}
+.lbmrow{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px solid var(--line)}
+.lbmrow:first-child{border-top:0;padding-top:0}
+.lbmname{display:flex;align-items:center;gap:8px}
+.lbmname b{font-size:1rem}
+.lbmrow.done .lbmname b{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1.5px}
+.chin{border-top:5px solid var(--p-arms)}
+.chin label{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
+.chin input{font-family:var(--mono);font-size:1rem;width:4.5em;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
 .startwu{width:100%;padding:13px;font-size:1rem}
 .chip.pickme.on::before{content:"✓ "}
 .guide{display:flex;flex-direction:column;gap:8px}
@@ -234,6 +250,18 @@ header{flex-direction:row!important;justify-content:space-between;align-items:fl
     <button id="tod" class="today">Today</button>
   </div>
 
+  <div class="card extra daily" id="dailycard">
+    <h3>Every day</h3>
+    <p>Four small things, every day you're in the condo. The squat hold is the one that matters most for that left hip — 2 minutes total a day, broken into whatever holds you can manage.</p>
+    <div class="drows" id="drows"></div>
+    <div class="timer" id="asqtimer">
+      <div class="clock" id="asqclock" aria-live="polite">0:00</div>
+      <div class="phase" id="asqphase">Asian squat hold — ready</div>
+      <button class="go" id="asqgo">Start hold</button>
+    </div>
+    <p>Feet a little wider than your shoulders, toes out, heels down, chest up. Hold a door frame if you need support; a bumper plate under the heels helps if they lift.</p>
+  </div>
+
   <div class="card extra pick">
     <h3>Today I'm doing</h3>
     <div class="pickrow" id="pickrow"></div>
@@ -263,6 +291,13 @@ header{flex-direction:row!important;justify-content:space-between;align-items:fl
 
   <div id="groups" style="display:flex;flex-direction:column;gap:14px"></div>
 
+  <div class="card extra lbm" id="lbmcard">
+    <h3>Low Back Matrix <span class="sub" style="text-transform:none;letter-spacing:0;font-family:var(--body)">3 times a week</span></h3>
+    <p>Dan Go's back fix: the McGill Big 3 plus a back extension. Each move is 10-second holds — 5 reps, then 3, then 1, each side. Tap a round when you've done it on both sides.</p>
+    <p>Go easy to start: side plank from the knees if the shoulder complains, bird dog on your fists if the right wrist does.</p>
+    <div id="lbmbody"></div>
+  </div>
+
   <div class="card extra fc" id="fccard">
     <h3>Farmer's carry: every day</h3>
     <p>Heaviest dumbbells you can hold for 90 seconds. Stand tall, shoulders back and down, short quick steps, and don't let them swing. Laps of the gym are fine.</p>
@@ -273,6 +308,17 @@ header{flex-direction:row!important;justify-content:space-between;align-items:fl
     </div>
     <div class="z2row"><label for="fckg">kg per hand <input id="fckg" inputmode="decimal" placeholder="28"></label><span class="bw" id="fcnote"></span></div>
     <button class="linkbtn" data-demo="farmer">▶ Watch Xander do it</button>
+  </div>
+
+  <div class="card extra chin" id="chincard">
+    <h3>Chin-ups: a few, every day</h3>
+    <p>Band-assisted, chin-up grip first — palms facing you, usually kinder on the elbows and shoulders than pull-ups. A few reps every day, spread through the day if you like. Ease off if the elbow or wrist complains.</p>
+    <p>Less band comes as your bodyweight drops and your lats get stronger. Assisted only for now — the unassisted one is the goal, not today's job.</p>
+    <div class="z2row">
+      <label for="chinreps">Reps today <input id="chinreps" inputmode="numeric" placeholder="5"></label>
+      <span class="bw" id="chinlast"></span>
+    </div>
+    <div class="chips" id="chinbands"></div>
   </div>
 
   <div class="card extra fin" id="fincard">
@@ -440,7 +486,8 @@ try{JSON.parse(localStorage.getItem("cw-closed")||"[]").forEach(x=>open.delete(x
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function parse(s){const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c)}
 function norm(o){return {done:o.done||{},sets:o.sets||{},kg:o.kg||{},used:o.used||{},tech:o.tech||{},pick:o.pick||[],
-  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},fc:o.fc||{},order:o.order||[],wsel:o.wsel,swap:o.swap||{},finished:o.finished||"",fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{}}}
+  wu:o.wu||{},mob:o.mob||{},hip:o.hip||0,cx:o.cx||{},fc:o.fc||{},order:o.order||[],wsel:o.wsel,swap:o.swap||{},finished:o.finished||"",fin:o.fin||{},z2:o.z2||{},ws:o.ws||{},mobH:o.mobH||{},mobS:o.mobS||{},
+  asq:o.asq||0,lbm:o.lbm||{},lbmVar:o.lbmVar||"bench",chin:o.chin||{}}}
 function day(k){return days[k]||(days[k]=norm({}))}
 const has=v=>v!==""&&v!=null;
 function lastKg(exId,beforeKey){
@@ -547,7 +594,11 @@ function renderWeek(){
   const ws=wk.filter(k=>days[k]&&Object.keys(days[k].ws||{}).length>=WS.length).length;
   const hips=wk.map(k=>days[k]&&days[k].hip).filter(Boolean);
   const fcd=wk.filter(k=>days[k]&&days[k].fc&&days[k].fc.done).length;
-  $("weekline").innerHTML=`<span>Wall sits <b>${ws}</b>/7</span><span>Carries <b>${fcd}</b>/7</span><span>Weights days <b>${lift}</b></span><span>Zone 2 walks <b>${z2.length}</b>${z2.length?` · <b>${mins}</b> min`:""}</span><span>Mobility days <b>${mob}</b></span>${hips.length?`<span>Left hip <b>${hips.join(", ")}</b> /5</span>`:""}`;
+  const asqMin=wk.reduce((a,k)=>a+((days[k]&&days[k].asq)||0),0);
+  const lbmN=wk.filter(k=>days[k]&&lbmDone(days[k])).length;
+  const chinD=wk.filter(k=>days[k]&&days[k].chin&&parseInt(days[k].chin.reps)>0);
+  const chinR=chinD.reduce((a,k)=>a+parseInt(days[k].chin.reps),0);
+  $("weekline").innerHTML=`<span>Wall sits <b>${ws}</b>/7</span><span>Carries <b>${fcd}</b>/7</span><span>Weights days <b>${lift}</b></span><span>Zone 2 walks <b>${z2.length}</b>${z2.length?` · <b>${mins}</b> min`:""}</span><span>Mobility days <b>${mob}</b></span><span>Asian squat <b>${Math.round(asqMin/60)}</b> min</span><span>Low back <b>${lbmN}</b>/3</span><span>Chin-ups <b>${chinD.length}</b> days · <b>${chinR}</b> reps</span>${hips.length?`<span>Left hip <b>${hips.join(", ")}</b> /5</span>`:""}`;
 }
 function chipList(list,key,store){
   const d=day(cur);
@@ -683,6 +734,9 @@ function summaryLines(){
   if(d.fc.done)lines.push("Farmer's carry: "+(d.fc.n||1)+" × 90s"+(d.fc.kg?" at "+d.fc.kg+" kg per hand":""));
   if(d.z2.done)lines.push("Zone 2: "+(d.z2.min||30)+" min "+(d.z2.where===1?"up Bukit Timah Hill":d.z2.where===2?"of 4 × 4 hill intervals":"on the treadmill")+(d.z2.where!==1&&d.z2.inc?" at "+d.z2.inc+"%":""));
   if(d.hip)lines.push("Left hip in pigeon: "+d.hip+"/5");
+  const asq=d.asq||0;if(asq)lines.push("Asian squat: "+fmt(asq)+" held");
+  if(lbmCount(d))lines.push("Low Back Matrix: "+lbmCount(d)+" of 4 moves");
+  if(d.chin&&parseInt(d.chin.reps)>0)lines.push("Chin-ups: "+d.chin.reps+" reps"+(d.chin.band?" ("+bandName(d.chin.band)+")":""));
   return lines;
 }
 function renderDone(){
@@ -696,7 +750,7 @@ function renderDone(){
 }
 function renderAll(){renderDate();renderPick();renderWeek();
   $("ws").innerHTML=WS.map((w,i)=>`<button class="chip ${day(cur).ws[i]?"on":""}" data-chip="ws" data-id="${i}">${w[0]} <small>${w[1]}</small></button>`).join("");
-  renderWarm();renderFin();renderFC();renderGroups();renderDone();renderBuilder();wsIdle()}
+  renderDaily();renderWarm();renderFin();renderFC();renderLBM();renderChin();renderGroups();renderDone();renderBuilder();wsIdle()}
 function rerenderEx(id){
   const e=ALLEX.find(x=>x.id===id),li=$("ex-"+id);if(!li)return;const wasOpen=li.classList.contains("open");
   li.outerHTML=exHtml(e,day(cur));if(wasOpen)$("ex-"+id).classList.add("open");
@@ -754,7 +808,7 @@ function renderFC(){
 }
 function fcStart(){fcEnd=Date.now()+FCSECS*1000;fcBeep=0;$("fctimer").className="timer carry";$("fcphase").textContent="Walk tall";$("fcgo").textContent="Stop";
   clearInterval(fcT);fcT=setInterval(fcTick,250);fcTick();keepAwake(true)}
-function fcStop(){clearInterval(fcT);fcT=null;if(!restT&&wsPhase==="idle")keepAwake(false);renderFC()}
+function fcStop(){clearInterval(fcT);fcT=null;if(!restT&&wsPhase==="idle")keepAwake(false);renderFC();renderDaily()}
 function fcTick(){const left=Math.max(0,Math.ceil((fcEnd-Date.now())/1000));$("fcclock").textContent=fmt(left);
   if(left>0&&left<=3&&left!==fcBeep){fcBeep=left;blip()}
   if(left>0)return;softTone();const d=day(cur),f=d.fc;f.n=(f.n||0)+1;f.done=true;if(!f.kg)f.kg=$("fckg").value||fcLastKg();save(cur);fcStop();renderWeek()}
@@ -779,12 +833,79 @@ function wsStart(){const n=nextSet();if(n<0)return;wsSet=n;wsBegin("hold");$("ws
   clearInterval(wsT);wsT=setInterval(wsTick,250);keepAwake(true)}
 function wsStop(){clearInterval(wsT);wsT=null;wsPhase="idle";if(!restT)keepAwake(false);wsIdle()}
 
+// ===================== every day: Asian squat hold =====================
+const ASQGOAL=120;
+let asqT=null,asqT0=0,asqBase=0;
+function renderAsq(){
+  const d=day(cur),tot=d.asq||0;
+  if(asqT)return;
+  $("asqclock").textContent=fmt(tot);
+  $("asqphase").textContent=tot>=ASQGOAL?"2:00 done for today — nice work":"Held "+fmt(tot)+" of 2:00 today";
+  $("asqgo").textContent=tot?"Hold again":"Start hold";
+}
+function renderDaily(){
+  const d=day(cur),wsN=Object.keys(d.ws||{}).length,fcN=(d.fc&&d.fc.n)||0;
+  const shDone=Object.keys(d.mob||{}).some(k=>MOBS.some(m=>m[0]===k));
+  const asq=d.asq||0;
+  $("drows").innerHTML=
+    `<button class="drow ${wsN>=WS.length?"on":""}" data-scroll="wscard"><span class="dtick">${wsN>=WS.length?"✓":""}</span><span class="dname">Wall sits</span><span class="dstat">${wsN}/${WS.length} sets</span></button>`+
+    `<div class="drow ${asq>=ASQGOAL?"on":""}"><span class="dtick">${asq>=ASQGOAL?"✓":""}</span><span class="dname">Asian squat hold</span><span class="dstat">${fmt(asq)} of 2:00 today</span></div>`+
+    `<button class="drow ${fcN?"on":""}" data-scroll="fccard"><span class="dtick">${fcN?"✓":""}</span><span class="dname">Farmer's carry</span><span class="dstat">${fcN?("done ×"+fcN):"not yet"}</span></button>`+
+    `<div class="drow ${shDone?"on":""}"><span class="dtick">${shDone?"✓":""}</span><span class="dname">Shoulder mobility</span><span class="dstat">pick one below</span></div>`+
+    `<div class="chips">${chipList(MOBS,"mob")}</div>`;
+  renderAsq();
+}
+function asqStart(){asqBase=day(cur).asq||0;asqT0=Date.now();$("asqgo").textContent="Stop";$("asqphase").textContent="Holding… breathe, heels down, chest up";
+  clearInterval(asqT);asqT=setInterval(asqTick,250);asqTick();keepAwake(true)}
+function asqTick(){if(!asqT)return;const el=asqBase+Math.floor((Date.now()-asqT0)/1000);$("asqclock").textContent=fmt(el);$("asqphase").textContent="Holding… "+fmt(el)+" this hold"}
+function asqStop(){clearInterval(asqT);asqT=null;const el=asqBase+Math.floor((Date.now()-asqT0)/1000);const d=day(cur);d.asq=Math.max(d.asq||0,el);save(cur);if(!restT&&wsPhase==="idle")keepAwake(false);softTone();renderAsq();renderDaily();renderWeek()}
+
+// ===================== Low Back Matrix (3x a week) =====================
+const LBM=[["mcgill","McGill Crunch","10s holds",null],["birddog","Bird Dog","10s holds",null],["sideplank","Side Plank","10s holds",null],["backext","Back Hyperextension","10s holds","hyper"]];
+const LBMVAR=[["bench","45° bench"],["floor","Floor Superman"],["flatbench","Flat bench reverse hyper"],["cable","Cable pull-through"]];
+const LBMVARCUE={bench:"Hips on the pad, arms crossed. Rise to a straight line — don't over-arch.",
+  floor:"Face down, lift your chest and thighs a little, hold 2–3s, lower slow. No kit needed.",
+  flatbench:"Face down, hips at the bench edge, hold on tight. Lift your legs to body line, lower slow.",
+  cable:"Low pulley, rope between your legs. Hinge back, then drive your hips forward to stand tall."};
+const LBMROUNDS=["5","3","1"];
+function lbmRounds(d,id){const r=d.lbm&&d.lbm[id];return r?r.filter(Boolean).length:0}
+function lbmDone(d){return LBM.every(m=>lbmRounds(d,m[0])>=3)}
+function lbmCount(d){return LBM.filter(m=>lbmRounds(d,m[0])>=3).length}
+function renderLBM(){
+  const d=day(cur);
+  $("lbmcard").classList.toggle("isdone",lbmDone(d));
+  $("lbmbody").innerHTML=LBM.map(m=>{
+    const r=(d.lbm&&d.lbm[m[0]])||[],done=r.filter(Boolean).length>=3;
+    const v=m[0]==="backext"?(d.lbmVar||"bench"):null;
+    const showDemo=m[3]&&!(m[0]==="backext"&&v!=="bench");
+    return `<div class="lbmrow ${done?"done":""}"><div class="lbmname"><b>${m[1]}</b><span class="bw">${m[2]}</span>${showDemo?`<button class="rowplay" data-demo="${m[3]}" aria-label="Watch ${m[1]} demo">▶</button>`:""}</div>
+      <div class="chips">${LBMROUNDS.map((n,i)=>`<button class="chip ${r[i]?"on":""}" data-lbm="${m[0]}" data-i="${i}">${n} × 10s</button>`).join("")}</div>${m[0]==="backext"?`
+      <div class="chips">${LBMVAR.map(x=>`<button class="chip ${v===x[0]?"on":""}" data-lbmvar="${x[0]}">${x[1]}</button>`).join("")}</div>
+      <p class="sub">${LBMVARCUE[v]}</p>
+      <p class="sub">The fixed sit-up machine isn't built for back extensions — skip it for this one.</p>`:""}</div>`}).join("")+
+    `<p class="sub">${lbmCount(d)} of 4 moves done${lbmDone(d)?" — matrix done for today":""}</p>`;
+}
+
+// ===================== chin-up ladder (daily) =====================
+const CHINBANDS=[["heavy","Heavy band"],["medium","Medium band"],["light","Light band"],["none","No band"]];
+function bandName(id){const b=CHINBANDS.find(x=>x[0]===id);return b?b[1]:""}
+function lastChin(){const k=Object.keys(days).filter(k=>k<cur&&days[k].chin&&parseInt(days[k].chin.reps)>0).sort().pop();return k?days[k].chin:null}
+function renderChin(){
+  const d=day(cur),c=d.chin||{},last=lastChin();
+  $("chincard").classList.toggle("isdone",parseInt(c.reps)>0);
+  if(document.activeElement!==$("chinreps"))$("chinreps").value=c.reps||"";
+  $("chinreps").placeholder=last?last.reps:"5";
+  $("chinlast").textContent=last?("Last: "+last.reps+" reps"+(last.band?", "+bandName(last.band):"")):"";
+  $("chinbands").innerHTML=CHINBANDS.map(b=>`<button class="chip ${c.band===b[0]?"on":""}" data-chinband="${b[0]}">${b[1]}</button>`).join("");
+}
+
 // ===================== events =====================
 document.addEventListener("click",ev=>{
   unlockAudio();
   const t=ev.target.closest("button,[data-open]");if(!t)return;
   const d=day(cur);
   if(t.dataset.demo){openDemo(t.dataset.demo);return}
+  if(t.dataset.scroll){const el=$(t.dataset.scroll);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});return}
   if(t.dataset.set){
     const id=t.dataset.set,i=+t.dataset.i,s=d.sets[id]||[false,false,false];s[i]=!s[i];d.sets[id]=s;
     const e=ALLEX.find(x=>x.id===id);
@@ -804,7 +925,10 @@ document.addEventListener("click",ev=>{
     save(cur);rerenderEx(id);renderWeek();updateCounts();return}
   if(t.dataset.open){$("ex-"+t.dataset.open).classList.toggle("open");return}
   if(t.dataset.chip){const k=t.dataset.chip,i=t.dataset.id;d[k][i]=!d[k][i];if(!d[k][i])delete d[k][i];t.classList.toggle("on",!!d[k][i]);save(cur);
-    if(k==="ws")wsIdle();renderWeek();return}
+    if(k==="mob")document.querySelectorAll(`[data-chip="mob"]`).forEach(b=>b.classList.toggle("on",!!d.mob[b.dataset.id]));
+    if(k==="ws")wsIdle();renderDaily();renderWeek();return}
+  if(t.dataset.lbm){const id=t.dataset.lbm,i=+t.dataset.i;const r=(d.lbm[id]||[false,false,false]).slice();r[i]=!r[i];d.lbm[id]=r;if(!r.some(Boolean))delete d.lbm[id];save(cur);renderLBM();renderWeek();return}
+  if(t.dataset.lbmvar){d.lbmVar=t.dataset.lbmvar;save(cur);renderLBM();return}
   if(t.dataset.hip){const n=+t.dataset.hip;d.hip=d.hip===n?0:n;save(cur);renderWarm();renderWeek();return}
   if(t.dataset.pick){const id=t.dataset.pick;let p=d.pick.slice();
     if(id==="full")p=p.includes("full")?[]:["full"];else{p=p.filter(x=>x!=="full");p=p.includes(id)?p.filter(x=>x!==id):[...p,id]}
@@ -815,7 +939,7 @@ document.addEventListener("click",ev=>{
     const ids=lineup(g).map(x=>x.id);ids[ids.indexOf(from)]=to;setLineup(g.id,ids);renderGroups();return}
   if(t.dataset.swap){const g=t.dataset.swap,cur0=plan().groups.find(x=>x.g.id===g).ex[0],idx=lineup(GROUPS.find(x=>x.id===g)).indexOf(cur0);
     d.swap[g]=(idx+1)%5;save(cur);renderGroups();return}
-  if(t.id==="finish"){if(!d.finished){d.finished=new Date().toISOString();stopRest();if(wsPhase!=="idle")wsStop();keepAwake(false);softTone();save(cur)}renderDone();$("donecard").scrollIntoView({block:"start",behavior:"smooth"});return}
+  if(t.id==="finish"){if(!d.finished){d.finished=new Date().toISOString();stopRest();if(wsPhase!=="idle")wsStop();if(asqT)asqStop();keepAwake(false);softTone();save(cur)}renderDone();$("donecard").scrollIntoView({block:"start",behavior:"smooth"});return}
   if(t.id==="unfinish"){d.finished="";save(cur);renderDone();return}
   if(t.id==="copysum"){const txt=["Condo Weights, "+parse(cur).toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"}),...summaryLines()].join("\n");
     const ok=()=>{t.textContent="Copied"},fail=()=>{t.textContent="Couldn't copy"};try{navigator.clipboard.writeText(txt).then(ok,fail)}catch(e){fail()}return}
@@ -829,11 +953,11 @@ document.addEventListener("click",ev=>{
   if(t.id==="gstop"){stopGuide();return}
   if(t.id==="reset"){
     if(!t.classList.contains("armed")){t.classList.add("armed");t.textContent="Tap again to clear today";setTimeout(()=>{t.classList.remove("armed");t.textContent="Reset today"},3000);return}
-    t.classList.remove("armed");t.textContent="Reset today";if(guide)stopGuide();stopRest();if(fcT)fcStop();if(wsPhase!=="idle")wsStop();choosing=false;
+    t.classList.remove("armed");t.textContent="Reset today";if(guide)stopGuide();stopRest();if(fcT)fcStop();if(wsPhase!=="idle")wsStop();if(asqT)asqStop();choosing=false;
     days[cur]=norm({});save(cur);renderAll();setStatus("Today cleared");return}
   if(t.dataset.usesug){d.pick=suggestion().ids;save(cur);renderAll();return}
   if(t.id==="showall"){d.pick=[];d.order=[];save(cur);renderAll();return}
-  if(t.id==="build"){building=true;if(!d.order.length){const last=lastOrder();if(last)d.order=last.slice()}renderBuilder();$("builder").scrollIntoView({block:"start",behavior:"smooth"});return}
+  if(t.id==="build"){if(building){building=false;$("builder").hidden=true;renderAll();return}building=true;if(!d.order.length){const last=lastOrder();if(last)d.order=last.slice()}renderBuilder();$("builder").scrollIntoView({block:"start",behavior:"smooth"});return}
   if(t.dataset.oadd){const id=t.dataset.oadd;d.order=d.order.includes(id)?d.order.filter(x=>x!==id):[...d.order,id];save(cur);renderBuilder();return}
   if(t.dataset.oup||t.dataset.odown){const id=t.dataset.oup||t.dataset.odown,i=d.order.indexOf(id),j=t.dataset.oup?i-1:i+1;
     if(i>=0&&j>=0&&j<d.order.length){[d.order[i],d.order[j]]=[d.order[j],d.order[i]];save(cur)}renderBuilder();return}
@@ -842,7 +966,9 @@ document.addEventListener("click",ev=>{
   if(t.id==="olast"){const last=lastOrder();if(last){d.order=last.slice();save(cur)}renderBuilder();return}
   if(t.id==="odone"){building=false;$("builder").hidden=true;renderAll();$("groups").scrollIntoView({block:"start",behavior:"smooth"});return}
   if(t.dataset.tech){const id=t.dataset.tech;d.tech[id]=d.tech[id]===t.dataset.v?undefined:t.dataset.v;if(!d.tech[id])delete d.tech[id];save(cur);rerenderEx(id);return}
+  if(t.dataset.chinband){d.chin.band=d.chin.band===t.dataset.chinband?"":t.dataset.chinband;save(cur);renderChin();return}
   if(t.id==="fcgo"){fcT?fcStop():fcStart();return}
+  if(t.id==="asqgo"){asqT?asqStop():asqStart();return}
   if(t.id==="wsgo"){wsPhase==="idle"?wsStart():wsStop();return}
   if(t.id==="z2tick"){d.z2.done=!d.z2.done;if(d.z2.done&&d.z2.where===undefined)d.z2.where=0;save(cur);renderFin();renderWeek();return}
   if(t.dataset.z2w){d.z2.where=+t.dataset.z2w;save(cur);renderFin();return}
@@ -862,6 +988,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet").hidden)
 document.addEventListener("input",ev=>{
   const t=ev.target,d=day(cur);
   if(t.id==="fckg"){d.fc.kg=t.value.trim();save(cur);return}
+  if(t.id==="chinreps"){d.chin.reps=t.value.trim();save(cur);renderChin();renderWeek();return}
   if(t.id==="z2min"||t.id==="z2inc"){d.z2[t.id==="z2min"?"min":"inc"]=t.value.trim();if(t.value.trim()){d.z2.done=true;if(d.z2.where===undefined)d.z2.where=0}
     $("fincard").classList.toggle("isdone",!!d.z2.done);save(cur);renderWeek();return}
   if(!t.dataset.kg)return;
@@ -870,7 +997,7 @@ document.addEventListener("input",ev=>{
   save(cur);
 });
 document.addEventListener("focusout",ev=>{const id=ev.target.dataset&&ev.target.dataset.kg;if(id)setTimeout(()=>{const a=document.activeElement;if(!a||!a.dataset||a.dataset.kg!==id)rerenderEx(id)},50)});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden){if(restT)restTick();if(wsT)wsTick();if(fcT)fcTick()}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){if(restT)restTick();if(wsT)wsTick();if(fcT)fcTick();if(asqT)asqTick()}});
 
 // ===================== Xander demos =====================
 const DW=220,DH=170,G=150;
